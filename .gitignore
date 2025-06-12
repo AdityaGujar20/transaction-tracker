@@ -1,0 +1,12 @@
+/venv
+demo.py
+/uploads
+app.py
+/bank-statement
+/templates
+/static
+/__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.db
