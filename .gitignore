@@ -1,1 +1,45 @@
-/.venv
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pkl
+*.log
+*.pyc
+
+# Environment
+.env
+.env/
+venv/
+ENV/
+env/
+*.egg-info/
+dist/
+build/
+
+# IDEs
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Temp or generated files
+*.bak
+*.tmp
+*.swp
+
+# Data processing
+data/processed/*_test.csv
+data/processed/temp_transactions*.json
+data/processed/categorized_*.csv
+
+# Secrets
+*.key
+*.pem

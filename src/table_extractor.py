@@ -1,8 +1,12 @@
 import pdfplumber
-import pandas as pd
+
 import re
-from decimal import Decimal
+import pandas as pd
+
 from datetime import datetime
+
+from decimal import Decimal
+
 
 def extract_bank_statement_table(pdf_path):
     """

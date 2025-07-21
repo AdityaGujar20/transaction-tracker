@@ -1,16 +1,19 @@
-import pandas as pd
 import json
-import os
-# from langchain.chat_models import ChatOpenAI
+import pandas as pd
+
 from langchain.schema import HumanMessage, SystemMessage
-# from langchain.callbacks import get_openai_callback
+from langchain_community.chat_models import ChatOpenAI
+from langchain_community.callbacks.manager import get_openai_callback
+
+import os
 import logging
 from typing import Dict, List
 from datetime import datetime
 
-from langchain_community.chat_models import ChatOpenAI
-from langchain_community.callbacks.manager import get_openai_callback
+from dotenv import load_dotenv
 
+load_dotenv()
+api_key = os.getenv("OPENAI_API_KEY")
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -214,8 +217,7 @@ def main():
     """
     Main function to process transactions using JSON batch approach
     """
-    # HARDCODED API KEY - Replace with your actual OpenAI API key
-    OPENAI_API_KEY = "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"  # ⚠️ REPLACE THIS WITH YOUR ACTUAL API KEY
+    OPENAI_API_KEY = api_key
     
     # Configuration
     project_root = get_project_root()

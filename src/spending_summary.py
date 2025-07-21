@@ -1,10 +1,17 @@
 import os
+from datetime import datetime
+
 import json
 import pandas as pd
+
 from langchain_community.chat_models import ChatOpenAI
 from langchain_community.callbacks.manager import get_openai_callback
 from langchain.schema import HumanMessage, SystemMessage
-from datetime import datetime
+
+from dotenv import load_dotenv
+
+load_dotenv()
+api_key = os.getenv("OPENAI_API_KEY")
 
 def load_categorized_data():
     file_path = os.path.join("..", "data", "processed", "categorized_bank_transactions_batch.csv")
@@ -90,7 +97,7 @@ def main():
     summary = summarize_for_llm(df)
 
     print("🔐 Checking API key...")
-    openai_api_key = "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"
+    openai_api_key = api_key
     if not openai_api_key.startswith("sk-"):
         print("❌ Please set a valid OpenAI API key in .env or directly in code.")
         return
