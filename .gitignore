@@ -7,6 +7,8 @@ __pycache__/
 *.log
 *.pyc
 
+processed/*
+
 # Environment
 .env
 .env/

@@ -3,116 +3,569 @@ import pandas as pd
 import tempfile
 import os
 from dotenv import load_dotenv
+import plotly.express as px
+import plotly.graph_objects as go
+from datetime import datetime
 
 # Import your existing processor class
-# Adjust the import path based on your file structure
 try:
-    from processor.tab_cat_merged import BankStatementProcessor  # Adjust import name as needed
+    from processor.tab_cat_merged import BankStatementProcessor
     PROCESSOR_AVAILABLE = True
 except ImportError:
     PROCESSOR_AVAILABLE = False
-    st.error("Could not import BankStatementProcessor. Please ensure the processor file is in the correct location.")
 
 # Load environment variables
 load_dotenv()
+
+# Custom CSS for beautiful styling
+def load_custom_css():
+    st.markdown("""
+    <style>
+    /* Import Google Fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    /* Global Styles */
+    .main {
+        font-family: 'Inter', sans-serif;
+    }
+    
+    /* Header Styles */
+    .main-header {
+        text-align: center;
+        padding: 2rem 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    }
+    
+    .main-header h1 {
+        font-size: 3rem;
+        font-weight: 700;
+        margin: 0;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .main-header p {
+        font-size: 1.2rem;
+        margin: 0.5rem 0 0 0;
+        opacity: 0.9;
+    }
+    
+    /* Card Styles */
+    .feature-card {
+        background: white;
+        padding: 2rem;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        border-left: 5px solid #667eea;
+        margin: 1rem 0;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
+    
+    .upload-card {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        text-align: center;
+        margin: 1rem 0;
+        box-shadow: 0 10px 30px rgba(240, 147, 251, 0.3);
+    }
+    
+    .config-card {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        margin: 1rem 0;
+        box-shadow: 0 10px 30px rgba(79, 172, 254, 0.3);
+    }
+    
+    .results-card {
+        background: white;
+        padding: 2rem;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        border-top: 5px solid #43e97b;
+        margin: 1rem 0;
+    }
+    
+    /* Status Messages */
+    .status-success {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        color: white;
+        padding: 1rem;
+        border-radius: 10px;
+        margin: 1rem 0;
+        text-align: center;
+        font-weight: 500;
+    }
+    
+    .status-processing {
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        color: white;
+        padding: 1rem;
+        border-radius: 10px;
+        margin: 1rem 0;
+        text-align: center;
+        font-weight: 500;
+    }
+    
+    /* Metric Cards */
+    .metric-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+        text-align: center;
+        margin: 0.5rem 0;
+        border-bottom: 3px solid #667eea;
+    }
+    
+    .metric-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #667eea;
+        margin: 0;
+    }
+    
+    .metric-label {
+        font-size: 0.9rem;
+        color: #666;
+        margin: 0.5rem 0 0 0;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    /* Button Styles */
+    .stButton > button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+    
+    /* Progress Bar */
+    .stProgress > div > div > div > div {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    /* Instructions */
+    .instructions-card {
+        background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+        padding: 2rem;
+        border-radius: 15px;
+        margin: 2rem 0;
+        box-shadow: 0 10px 30px rgba(252, 182, 159, 0.3);
+    }
+    
+    .instructions-card h3 {
+        color: #8b4513;
+        margin-bottom: 1rem;
+    }
+    
+    /* Hide Streamlit Elements */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    
+    /* Sidebar Styling */
+    .css-1d391kg {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    /* Data Editor Styling */
+    .stDataEditor {
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    /* Alert Styling */
+    .element-container .alert {
+        border-radius: 10px;
+        border: none;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+def create_header():
+    st.markdown("""
+    <div class="main-header">
+        <h1>💳 Bank Statement Categorizer</h1>
+        <p>Transform your financial data with AI-powered transaction categorization</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+def check_api_key():
+    """Check if API key is available from environment variables only"""
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        st.error("""
+        🔑 **OpenAI API Key Required**
+        
+        Please set your OpenAI API key as an environment variable:
+        ```bash
+        export OPENAI_API_KEY="your-api-key-here"
+        ```
+        
+        Or add it to your `.env` file:
+        ```
+        OPENAI_API_KEY=your-api-key-here
+        ```
+        """)
+        return None
+    return api_key
+
+def create_upload_section():
+    st.markdown("""
+    <div class="upload-card">
+        <h3>📤 Upload Your Bank Statement</h3>
+        <p>Drag and drop your PDF file or click to browse</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    uploaded_file = st.file_uploader(
+        "",
+        type="pdf",
+        help="Upload your bank statement in PDF format",
+        label_visibility="collapsed"
+    )
+    
+    return uploaded_file
+
+def create_config_section():
+    st.markdown("""
+    <div class="config-card">
+        <h3>⚙️ Processing Configuration</h3>
+        <p>Customize your processing settings</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        model_choice = st.selectbox(
+            "🤖 AI Model",
+            ["gpt-3.5-turbo", "gpt-4", "gpt-4.1"],
+            index=0,
+            help="Choose the OpenAI model for categorization"
+        )
+    
+    with col2:
+        batch_size = st.slider(
+            "📦 Batch Size",
+            min_value=5,
+            max_value=50,
+            value=20,
+            help="Number of transactions to process per API call"
+        )
+    
+    return model_choice, batch_size
+
+def create_processing_options():
+    st.markdown("### 🎛️ Display Options")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        show_raw_data = st.checkbox("📋 Show extracted raw data", value=False)
+        show_summary = st.checkbox("📊 Show category summary", value=True)
+    
+    with col2:
+        show_charts = st.checkbox("📈 Show interactive charts", value=True)
+        show_comparison = st.checkbox("📅 Show monthly comparison", value=True)
+    
+    return show_raw_data, show_summary, show_charts, show_comparison
+
+def create_metric_cards(df):
+    """Create beautiful metric cards"""
+    col1, col2, col3, col4 = st.columns(4)
+    
+    total_transactions = len(df)
+    total_withdrawals = df['Withdrawal(Dr)'].sum()
+    total_deposits = df['Deposit(Cr)'].sum()
+    unique_categories = df['Category'].nunique()
+    
+    with col1:
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-value">{total_transactions}</div>
+            <div class="metric-label">Total Transactions</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col2:
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-value">₹{total_withdrawals:,.0f}</div>
+            <div class="metric-label">Total Spent</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col3:
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-value">₹{total_deposits:,.0f}</div>
+            <div class="metric-label">Total Received</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col4:
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-value">{unique_categories}</div>
+            <div class="metric-label">Categories Used</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+def create_interactive_charts(df):
+    """Create beautiful interactive charts"""
+    
+    # Category distribution pie chart
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("#### 🍰 Transaction Distribution by Category")
+        category_counts = df['Category'].value_counts()
+        
+        fig_pie = px.pie(
+            values=category_counts.values,
+            names=category_counts.index,
+            title="",
+            color_discrete_sequence=px.colors.qualitative.Set3
+        )
+        fig_pie.update_traces(textposition='inside', textinfo='percent+label')
+        fig_pie.update_layout(
+            font=dict(family="Inter", size=12),
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
+            height=400
+        )
+        st.plotly_chart(fig_pie, use_container_width=True)
+    
+    with col2:
+        st.markdown("#### 💰 Spending by Category")
+        spending_data = df[df['Withdrawal(Dr)'] > 0].groupby('Category')['Withdrawal(Dr)'].sum().sort_values(ascending=True)
+        
+        fig_bar = px.bar(
+            x=spending_data.values,
+            y=spending_data.index,
+            orientation='h',
+            title="",
+            color=spending_data.values,
+            color_continuous_scale='viridis'
+        )
+        fig_bar.update_layout(
+            font=dict(family="Inter", size=12),
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
+            height=400,
+            showlegend=False,
+            xaxis_title="Amount (₹)",
+            yaxis_title="Category"
+        )
+        st.plotly_chart(fig_bar, use_container_width=True)
+
+def create_monthly_analysis(df):
+    """Create monthly analysis charts"""
+    if 'Date' not in df.columns:
+        return
+        
+    df['Year-Month'] = df['Date'].dt.strftime('%Y-%m')
+    
+    # Monthly spending trend
+    st.markdown("#### 📈 Monthly Spending Trend")
+    monthly_spending = df[df['Withdrawal(Dr)'] > 0].groupby('Year-Month')['Withdrawal(Dr)'].sum().reset_index()
+    monthly_spending = monthly_spending.sort_values('Year-Month')
+    
+    fig_trend = px.line(
+        monthly_spending,
+        x='Year-Month',
+        y='Withdrawal(Dr)',
+        title="",
+        markers=True,
+        line_shape='spline'
+    )
+    fig_trend.update_traces(line_color='#667eea', marker_color='#764ba2')
+    fig_trend.update_layout(
+        font=dict(family="Inter", size=12),
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        height=300,
+        xaxis_title="Month",
+        yaxis_title="Amount (₹)"
+    )
+    st.plotly_chart(fig_trend, use_container_width=True)
+    
+    # Category heatmap by month
+    st.markdown("#### 🔥 Category Activity Heatmap")
+    monthly_category = df.groupby(['Year-Month', 'Category']).size().unstack(fill_value=0)
+    
+    if not monthly_category.empty:
+        fig_heatmap = px.imshow(
+            monthly_category.T,
+            title="",
+            color_continuous_scale='viridis',
+            aspect='auto'
+        )
+        fig_heatmap.update_layout(
+            font=dict(family="Inter", size=12),
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
+            height=400,
+            xaxis_title="Month",
+            yaxis_title="Category"
+        )
+        st.plotly_chart(fig_heatmap, use_container_width=True)
+
+def create_instructions():
+    st.markdown("""
+    <div class="instructions-card">
+        <h3>📋 How to Use This App</h3>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; margin-top: 1rem;">
+            <div>
+                <h4>🔧 Setup</h4>
+                <ul>
+                    <li>Set your OpenAI API key as environment variable</li>
+                    <li>Ensure your bank statement is in PDF format</li>
+                    <li>Choose your preferred AI model and settings</li>
+                </ul>
+            </div>
+            
+            <div>
+                <h4>📤 Process</h4>
+                <ul>
+                    <li>Upload your bank statement PDF</li>
+                    <li>Click "Process Statement" to start</li>
+                    <li>Wait for AI categorization to complete</li>
+                </ul>
+            </div>
+            
+            <div>
+                <h4>✏️ Review & Edit</h4>
+                <ul>
+                    <li>Review categorized transactions</li>
+                    <li>Edit categories using dropdown menus</li>
+                    <li>View updated summaries and charts</li>
+                </ul>
+            </div>
+            
+            <div>
+                <h4>💾 Export</h4>
+                <ul>
+                    <li>Download results as CSV or JSON</li>
+                    <li>All manual corrections included</li>
+                    <li>Ready for further analysis</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div style="margin-top: 2rem; padding: 1rem; background: rgba(255,255,255,0.3); border-radius: 10px;">
+            <h4>🏷️ Available Categories</h4>
+            <p><strong>Food & Dining</strong> • <strong>Transportation</strong> • <strong>Shopping</strong> • <strong>Healthcare</strong> • <strong>Entertainment</strong> • <strong>Utilities & Bills</strong> • <strong>Financial Services</strong> • <strong>Personal Care</strong> • <strong>Education</strong> • <strong>Transfer/Refund</strong> • <strong>Miscellaneous</strong></p>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
 def main():
     st.set_page_config(
         page_title="Bank Statement Categorizer",
         page_icon="💳",
-        layout="wide"
+        layout="wide",
+        initial_sidebar_state="collapsed"
     )
     
-    st.title("💳 Bank Statement Categorizer")
-    st.markdown("Upload your bank statement PDF and get categorized transactions instantly!")
+    # Load custom CSS
+    load_custom_css()
     
-    # Initialize session state for storing processed data
+    # Create beautiful header
+    create_header()
+    
+    # Check for API key
+    api_key = check_api_key()
+    
+    if not api_key:
+        create_instructions()
+        return
+    
+    # Initialize session state
     if 'df_processed' not in st.session_state:
         st.session_state.df_processed = None
     if 'processor' not in st.session_state:
         st.session_state.processor = None
     
-    # Sidebar for API key
-    st.sidebar.header("🔑 Configuration")
-    
-    # API Key input
-    api_key = st.sidebar.text_input(
-        "OpenAI API Key",
-        type="password",
-        value=os.getenv("OPENAI_API_KEY", ""),
-        help="Enter your OpenAI API key. You can also set it in your .env file."
-    )
-    
-    # Model selection
-    model_choice = st.sidebar.selectbox(
-        "Select Model",
-        ["gpt-3.5-turbo", "gpt-4", "gpt-4-turbo-preview"],
-        index=0,
-        help="Choose the OpenAI model for categorization"
-    )
-    
-    # Batch size
-    batch_size = st.sidebar.slider(
-        "Batch Size",
-        min_value=5,
-        max_value=50,
-        value=20,
-        help="Number of transactions to process per API call"
-    )
-    
-    # Main content
+    # Main content layout
     col1, col2 = st.columns([1, 1])
     
     with col1:
-        st.header("📤 Upload Bank Statement")
-        
-        # File uploader
-        uploaded_file = st.file_uploader(
-            "Choose a PDF file",
-            type="pdf",
-            help="Upload your bank statement in PDF format"
-        )
-        
-        if uploaded_file is not None:
-            st.success(f"✅ File uploaded: {uploaded_file.name}")
-            st.info(f"📄 File size: {uploaded_file.size / 1024:.1f} KB")
+        uploaded_file = create_upload_section()
+        if uploaded_file:
+            st.markdown(f"""
+            <div class="status-success">
+                ✅ File uploaded successfully: {uploaded_file.name} ({uploaded_file.size / 1024:.1f} KB)
+            </div>
+            """, unsafe_allow_html=True)
     
     with col2:
-        st.header("⚙️ Processing Options")
-        
-        # Processing options
-        show_raw_data = st.checkbox("Show extracted raw data", value=False)
-        show_summary = st.checkbox("Show category summary", value=True)
-        
-        # Submit button
+        model_choice, batch_size = create_config_section()
+    
+    # Processing options
+    st.markdown("---")
+    show_raw_data, show_summary, show_charts, show_comparison = create_processing_options()
+    
+    # Process button
+    st.markdown("---")
+    col1, col2, col3 = st.columns([1, 2, 1])
+    
+    with col2:
         process_button = st.button(
-            "🚀 Process Statement",
+            "🚀 Process Bank Statement",
             type="primary",
-            disabled=not uploaded_file or not api_key or not PROCESSOR_AVAILABLE
+            disabled=not uploaded_file or not PROCESSOR_AVAILABLE,
+            use_container_width=True
         )
     
     # Processing section
     if process_button and uploaded_file and api_key and PROCESSOR_AVAILABLE:
-        
-        # Create a temporary file to save the uploaded PDF
         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
             tmp_file.write(uploaded_file.read())
             tmp_pdf_path = tmp_file.name
         
         try:
-            # Initialize progress bar
-            progress_bar = st.progress(0)
-            status_text = st.empty()
+            # Progress tracking
+            progress_container = st.container()
+            with progress_container:
+                progress_bar = st.progress(0)
+                status_text = st.empty()
             
-            # Initialize the processor
-            status_text.text("🔧 Initializing processor...")
+            # Processing steps with beautiful status messages
+            status_text.markdown('<div class="status-processing">🔧 Initializing AI processor...</div>', unsafe_allow_html=True)
             progress_bar.progress(10)
             
             processor = BankStatementProcessor(api_key, model_name=model_choice)
             st.session_state.processor = processor
             
-            # Extract transactions from PDF
-            status_text.text("📄 Extracting transactions from PDF...")
+            status_text.markdown('<div class="status-processing">📄 Extracting transactions from PDF...</div>', unsafe_allow_html=True)
             progress_bar.progress(30)
             
             try:
@@ -120,12 +573,12 @@ def main():
                 df = processor.clean_and_format_data(df)
                 
                 if df.empty:
-                    status_text.text("🔄 Trying alternative extraction method...")
+                    status_text.markdown('<div class="status-processing">🔄 Trying alternative extraction method...</div>', unsafe_allow_html=True)
                     df = processor.extract_transactions_regex(tmp_pdf_path)
                     df = processor.clean_and_format_data(df)
                     
             except Exception as e:
-                status_text.text("🔄 Trying alternative extraction method...")
+                status_text.markdown('<div class="status-processing">🔄 Trying alternative extraction method...</div>', unsafe_allow_html=True)
                 df = processor.extract_transactions_regex(tmp_pdf_path)
                 df = processor.clean_and_format_data(df)
             
@@ -133,22 +586,23 @@ def main():
                 st.error("❌ No transactions found in the PDF. Please check the PDF format.")
                 return
             
-            st.success(f"✅ Successfully extracted {len(df)} transactions")
+            st.markdown(f"""
+            <div class="status-success">
+                ✅ Successfully extracted {len(df)} transactions
+            </div>
+            """, unsafe_allow_html=True)
             progress_bar.progress(50)
             
-            # Show raw data if requested
             if show_raw_data:
-                st.subheader("📋 Extracted Raw Data")
+                st.markdown("### 📋 Extracted Raw Data")
                 st.dataframe(df, use_container_width=True)
             
-            # Convert to JSON for categorization
-            status_text.text("🔄 Preparing data for categorization...")
+            status_text.markdown('<div class="status-processing">🔄 Preparing data for AI categorization...</div>', unsafe_allow_html=True)
             progress_bar.progress(60)
             
             transactions_json = processor.df_to_json_for_categorization(df)
             
-            # Categorize transactions
-            status_text.text("🤖 Categorizing transactions with AI...")
+            status_text.markdown('<div class="status-processing">🤖 AI is categorizing your transactions...</div>', unsafe_allow_html=True)
             progress_bar.progress(70)
             
             categorization_results = processor.batch_categorize_all_transactions(
@@ -156,8 +610,7 @@ def main():
                 batch_size=batch_size
             )
             
-            # Add categories to dataframe
-            status_text.text("📊 Preparing final results...")
+            status_text.markdown('<div class="status-processing">📊 Finalizing results...</div>', unsafe_allow_html=True)
             progress_bar.progress(90)
             
             categories = []
@@ -166,377 +619,165 @@ def main():
                 categories.append(category)
             
             df['Category'] = categories
-            
-            # Store in session state
             st.session_state.df_processed = df.copy()
             
-            # Final progress
             progress_bar.progress(100)
-            status_text.text("✅ Processing complete!")
+            status_text.markdown('<div class="status-success">✅ Processing completed successfully!</div>', unsafe_allow_html=True)
             
         except Exception as e:
             st.error(f"❌ An error occurred during processing: {str(e)}")
-            st.error("Please check your API key and try again.")
             
         finally:
-            # Clean up temporary file
             if os.path.exists(tmp_pdf_path):
                 os.unlink(tmp_pdf_path)
     
-    # Display results if we have processed data
+    # Display results
     if st.session_state.df_processed is not None:
         df = st.session_state.df_processed.copy()
         processor = st.session_state.processor
         
-        # Display results
-        st.header("📊 Categorized Transactions")
+        st.markdown("---")
+        st.markdown("## 🎉 Your Categorized Transactions")
         
-        # Create year-month column for filtering
-        df['Year-Month'] = df['Date'].dt.strftime('%Y-%m')
-        df['Year'] = df['Date'].dt.year
-        df['Month'] = df['Date'].dt.month
+        # Metric cards
+        create_metric_cards(df)
         
-        # Get unique year-months for filtering
-        unique_periods = sorted(df['Year-Month'].unique(), reverse=True)
-        unique_years = sorted(df['Year'].unique(), reverse=True)
+        # Interactive charts
+        if show_charts:
+            st.markdown("---")
+            st.markdown("## 📊 Visual Analytics")
+            create_interactive_charts(df)
+        
+        # Monthly analysis
+        if show_comparison:
+            st.markdown("---")
+            st.markdown("## 📈 Monthly Analysis")
+            create_monthly_analysis(df)
+        
+        # Editable transactions table
+        st.markdown("---")
+        st.markdown("## 📝 Review & Edit Transactions")
+        
+        st.markdown("""
+        <div class="results-card">
+            <h4>💡 Pro Tip</h4>
+            <p>Click on any category in the table below to correct misclassifications. Your changes will automatically update all summaries and charts!</p>
+        </div>
+        """, unsafe_allow_html=True)
         
         # Filter controls
-        filter_col1, filter_col2, filter_col3 = st.columns(3)
+        df['Year-Month'] = df['Date'].dt.strftime('%Y-%m')
+        unique_periods = sorted(df['Year-Month'].unique(), reverse=True)
         
-        with filter_col1:
-            view_type = st.selectbox(
-                "📅 View Type",
-                ["All Transactions", "By Month-Year", "By Year"],
-                index=0
-            )
+        col1, col2, col3 = st.columns(3)
         
-        with filter_col2:
-            if view_type == "By Month-Year":
-                selected_period = st.selectbox(
-                    "Select Period",
-                    ["All"] + unique_periods,
-                    index=0
-                )
-            elif view_type == "By Year":
-                selected_year = st.selectbox(
-                    "Select Year",
-                    ["All"] + unique_years,
-                    index=0
-                )
+        with col1:
+            view_type = st.selectbox("📅 View", ["All Transactions", "By Month"], index=0)
         
-        with filter_col3:
-            show_summary_tabs = st.checkbox("Show Monthly Comparison", value=True)
+        with col2:
+            if view_type == "By Month":
+                selected_period = st.selectbox("Select Period", ["All"] + unique_periods, index=0)
+            else:
+                selected_period = "All"
         
-        # Filter dataframe based on selection
-        if view_type == "By Month-Year" and selected_period != "All":
+        with col3:
+            transactions_per_page = st.selectbox("Rows per page", [25, 50, 100, "All"], index=0)
+        
+        # Filter dataframe
+        if view_type == "By Month" and selected_period != "All":
             filtered_df = df[df['Year-Month'] == selected_period].copy()
-            st.subheader(f"📋 Transactions for {selected_period}")
-        elif view_type == "By Year" and selected_year != "All":
-            filtered_df = df[df['Year'] == selected_year].copy()
-            st.subheader(f"📋 Transactions for {selected_year}")
         else:
             filtered_df = df.copy()
-            st.subheader("📋 All Transactions")
         
-        # Create columns for layout
-        result_col1, result_col2 = st.columns([2, 1])
+        # Prepare editable dataframe
+        editable_df = filtered_df.copy()
+        editable_df = editable_df.drop(columns=['Chq/Ref No', 'Year-Month'], errors='ignore')
+        editable_df['Date'] = editable_df['Date'].dt.strftime('%d-%m-%Y')
         
-        with result_col1:
-            # Add editing interface
-            st.markdown("### 📝 Editable Transactions Table")
-            st.info("💡 **Tip**: Use the data editor below to correct any misclassified categories. Changes will update the summary automatically!")
-            
-            # Prepare editable dataframe
-            editable_df = filtered_df.copy()
-            editable_df = editable_df.drop(columns=['Chq/Ref No', 'Year-Month', 'Year', 'Month'], errors='ignore')
-            editable_df['Date'] = editable_df['Date'].dt.strftime('%d-%m-%Y')
-            
-            # Format currency columns for display but keep original values for editing
-            display_cols = editable_df.columns.tolist()
-            
-            # Create the editable data editor
-            edited_df = st.data_editor(
-                editable_df,
-                use_container_width=True,
-                hide_index=True,
-                column_config={
-                    "Date": st.column_config.TextColumn(
-                        "Date",
-                        disabled=True,
-                        help="Transaction date"
-                    ),
-                    "Description": st.column_config.TextColumn(
-                        "Description", 
-                        disabled=True,
-                        help="Transaction description"
-                    ),
-                    "Withdrawal(Dr)": st.column_config.NumberColumn(
-                        "Withdrawal(Dr)",
-                        disabled=True,
-                        format="₹%.2f",
-                        help="Withdrawal amount"
-                    ),
-                    "Deposit(Cr)": st.column_config.NumberColumn(
-                        "Deposit(Cr)",
-                        disabled=True,
-                        format="₹%.2f",
-                        help="Deposit amount"
-                    ),
-                    "Balance": st.column_config.NumberColumn(
-                        "Balance",
-                        disabled=True,
-                        format="₹%.2f",
-                        help="Account balance"
-                    ),
-                    "Category": st.column_config.SelectboxColumn(
-                        "Category",
-                        options=processor.categories if processor else [
-                            "Food & Dining", "Transportation", "Shopping", "Healthcare",
-                            "Entertainment", "Utilities & Bills", "Financial Services",
-                            "Personal Care", "Education", "Transfer/Refund", "Miscellaneous"
-                        ],
-                        help="Select the correct category",
-                        required=True
-                    )
-                },
-                key="transaction_editor"
-            )
-            
-            # Update the main dataframe with edited categories
-            if not edited_df.equals(editable_df):
-                # Find which categories were changed
-                category_changes = edited_df['Category'] != editable_df['Category']
-                if category_changes.any():
-                    # Update the filtered dataframe
-                    filtered_df.loc[filtered_df.index, 'Category'] = edited_df['Category'].values
-                    
-                    # Update the main session dataframe
-                    for idx, new_category in zip(filtered_df.index, edited_df['Category']):
-                        st.session_state.df_processed.loc[idx, 'Category'] = new_category
-                    
-                    st.success("✅ Categories updated successfully!")
-                    
-                    # Force rerun to update summary
-                    st.rerun()
+        # Create the editable data editor
+        edited_df = st.data_editor(
+            editable_df,
+            use_container_width=True,
+            hide_index=True,
+            num_rows="dynamic" if transactions_per_page == "All" else transactions_per_page,
+            column_config={
+                "Date": st.column_config.TextColumn("Date", disabled=True, width="small"),
+                "Description": st.column_config.TextColumn("Description", disabled=True, width="large"),
+                "Withdrawal(Dr)": st.column_config.NumberColumn("Withdrawal", disabled=True, format="₹%.2f", width="medium"),
+                "Deposit(Cr)": st.column_config.NumberColumn("Deposit", disabled=True, format="₹%.2f", width="medium"),
+                "Balance": st.column_config.NumberColumn("Balance", disabled=True, format="₹%.2f", width="medium"),
+                "Category": st.column_config.SelectboxColumn(
+                    "Category",
+                    options=processor.categories if processor else [
+                        "Food & Dining", "Transportation", "Shopping", "Healthcare",
+                        "Entertainment", "Utilities & Bills", "Financial Services",
+                        "Personal Care", "Education", "Transfer/Refund", "Miscellaneous"
+                    ],
+                    width="medium",
+                    required=True
+                )
+            },
+            key="transaction_editor"
+        )
         
-        with result_col2:
-            if show_summary:
-                st.subheader("📈 Current Period Summary")
+        # Update categories if changed
+        if not edited_df.equals(editable_df):
+            category_changes = edited_df['Category'] != editable_df['Category']
+            if category_changes.any():
+                for idx, new_category in zip(filtered_df.index, edited_df['Category']):
+                    st.session_state.df_processed.loc[idx, 'Category'] = new_category
                 
-                # Calculate category statistics for filtered data (using updated categories)
-                category_counts = filtered_df['Category'].value_counts()
-                total_transactions = len(filtered_df)
-                
-                if total_transactions > 0:
-                    # Create summary dataframe
-                    summary_data = []
-                    for category, count in category_counts.items():
-                        percentage = (count / total_transactions) * 100
-                        summary_data.append({
-                            'Category': category,
-                            'Count': count,
-                            'Percentage': f"{percentage:.1f}%"
-                        })
-                    
-                    summary_df = pd.DataFrame(summary_data)
-                    st.dataframe(summary_df, use_container_width=True, hide_index=True)
-                    
-                    # Display total
-                    st.metric("Total Transactions", total_transactions)
-                    
-                    # Show spending by category (for withdrawals only)
-                    st.subheader("💰 Spending by Category")
-                    spending_data = filtered_df[filtered_df['Withdrawal(Dr)'] > 0].groupby('Category')['Withdrawal(Dr)'].sum().sort_values(ascending=False)
-                    
-                    for category, amount in spending_data.head(5).items():  # Show top 5
-                        st.metric(category, f"₹{amount:,.2f}")
-                else:
-                    st.info("No transactions in selected period")
+                st.markdown('<div class="status-success">✅ Categories updated successfully!</div>', unsafe_allow_html=True)
+                st.rerun()
         
-        # Add a button to save/export updated categories
+        # Download section
         st.markdown("---")
-        save_col1, save_col2, save_col3 = st.columns([1, 1, 1])
+        st.markdown("## 💾 Export Your Results")
         
-        with save_col1:
-            if st.button("🔄 Reset All Categories", type="secondary"):
-                if st.session_state.processor:
-                    # Show confirmation dialog
-                    st.warning("⚠️ This will reset all categories to their original AI-generated values!")
-                    
-        with save_col2:
-            # Show number of manual edits made
-            if st.session_state.df_processed is not None:
-                # Compare with original if we had it stored
-                manual_edits = 0  # This would need to be tracked if we stored original categories
-                st.info(f"📝 Manual edits made: {manual_edits}")
+        col1, col2, col3 = st.columns(3)
         
-        # Monthly/Yearly Comparison Section (using updated dataframe)
-        if show_summary_tabs and len(unique_periods) > 1:
-            # Use the updated dataframe from session state
-            df_for_analysis = st.session_state.df_processed.copy()
-            df_for_analysis['Year-Month'] = df_for_analysis['Date'].dt.strftime('%Y-%m')
-            
-            st.header("📈 Monthly Category Analysis")
-            
-            # Create tabs for different views
-            tab1, tab2, tab3 = st.tabs(["📊 Category by Month", "💰 Spending Trends", "📋 Summary Table"])
-            
-            with tab1:
-                # Category distribution by month
-                monthly_category = df_for_analysis.groupby(['Year-Month', 'Category']).size().unstack(fill_value=0)
-                
-                if not monthly_category.empty:
-                    st.subheader("Transaction Count by Category and Month")
-                    st.bar_chart(monthly_category)
-                    
-                    # Show percentage distribution
-                    monthly_category_pct = monthly_category.div(monthly_category.sum(axis=1), axis=0) * 100
-                    st.subheader("Category Distribution (%) by Month")
-                    st.area_chart(monthly_category_pct)
-            
-            with tab2:
-                # Spending trends by month
-                monthly_spending = df_for_analysis[df_for_analysis['Withdrawal(Dr)'] > 0].groupby(['Year-Month', 'Category'])['Withdrawal(Dr)'].sum().unstack(fill_value=0)
-                
-                if not monthly_spending.empty:
-                    st.subheader("Spending Amount by Category and Month")
-                    st.bar_chart(monthly_spending)
-                    
-                    # Total monthly spending trend
-                    total_monthly_spending = monthly_spending.sum(axis=1)
-                    st.subheader("Total Monthly Spending Trend")
-                    st.line_chart(total_monthly_spending)
-            
-            with tab3:
-                # Detailed comparison table (using updated categories)
-                comparison_data = []
-                processor_categories = processor.categories if processor else [
-                    "Food & Dining", "Transportation", "Shopping", "Healthcare",
-                    "Entertainment", "Utilities & Bills", "Financial Services",
-                    "Personal Care", "Education", "Transfer/Refund", "Miscellaneous"
-                ]
-                
-                for period in unique_periods:
-                    period_data = df_for_analysis[df_for_analysis['Year-Month'] == period]
-                    category_counts = period_data['Category'].value_counts()
-                    total_spending = period_data[period_data['Withdrawal(Dr)'] > 0]['Withdrawal(Dr)'].sum()
-                    
-                    for category in processor_categories:
-                        count = category_counts.get(category, 0)
-                        category_spending = period_data[
-                            (period_data['Category'] == category) & 
-                            (period_data['Withdrawal(Dr)'] > 0)
-                        ]['Withdrawal(Dr)'].sum()
-                        
-                        comparison_data.append({
-                            'Period': period,
-                            'Category': category,
-                            'Transaction Count': count,
-                            'Total Spending': f"₹{category_spending:,.2f}",
-                            'Avg per Transaction': f"₹{category_spending/count:,.2f}" if count > 0 else "₹0.00"
-                        })
-                
-                comparison_df = pd.DataFrame(comparison_data)
-                
-                if not comparison_df.empty:
-                    # Pivot table for better view
-                    pivot_count = comparison_df.pivot(index='Category', columns='Period', values='Transaction Count').fillna(0)
-                    
-                    st.subheader("Transaction Count Comparison")
-                    st.dataframe(pivot_count, use_container_width=True)
-                    
-                    # Filter to show only categories with transactions
-                    active_categories = comparison_df[comparison_df['Transaction Count'] > 0]['Category'].unique()
-                    filtered_comparison = comparison_df[comparison_df['Category'].isin(active_categories)]
-                    
-                    st.subheader("Detailed Spending Analysis")
-                    st.dataframe(
-                        filtered_comparison, 
-                        use_container_width=True, 
-                        hide_index=True,
-                        column_config={
-                            'Period': st.column_config.TextColumn('Period'),
-                            'Category': st.column_config.TextColumn('Category'),
-                            'Transaction Count': st.column_config.NumberColumn('Count'),
-                            'Total Spending': st.column_config.TextColumn('Total Spending'),
-                            'Avg per Transaction': st.column_config.TextColumn('Avg/Transaction')
-                        }
-                    )
-        
-        # Download section (using updated dataframe)
-        st.header("💾 Download Results")
-        
-        download_col1, download_col2 = st.columns(2)
-        
-        # Use the updated dataframe for downloads
         final_df = st.session_state.df_processed.copy()
         
-        with download_col1:
-            # Convert to CSV for download
+        with col1:
             csv_data = final_df.to_csv(index=False)
             st.download_button(
-                label="📄 Download Updated CSV",
+                label="📄 Download CSV",
                 data=csv_data,
-                file_name=f"categorized_transactions_updated.csv",
+                file_name=f"categorized_transactions_{datetime.now().strftime('%Y%m%d')}.csv",
                 mime="text/csv",
-                help="Download CSV with your manually corrected categories"
+                use_container_width=True
             )
         
-        with download_col2:
-            # Convert to JSON for download
+        with col2:
             json_data = final_df.to_json(orient='records', date_format='iso', indent=2)
             st.download_button(
-                label="📄 Download Updated JSON",
+                label="📄 Download JSON",
                 data=json_data,
-                file_name=f"categorized_transactions_updated.json",
+                file_name=f"categorized_transactions_{datetime.now().strftime('%Y%m%d')}.json",
                 mime="application/json",
-                help="Download JSON with your manually corrected categories"
+                use_container_width=True
+            )
+        
+        with col3:
+            excel_data = final_df.to_excel(index=False, engine='openpyxl')
+            st.download_button(
+                label="📊 Download Excel",
+                data=excel_data,
+                file_name=f"categorized_transactions_{datetime.now().strftime('%Y%m%d')}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                use_container_width=True
             )
     
-    # Instructions section
-    if st.session_state.df_processed is None:
-        st.header("📋 Instructions")
-        st.markdown("""
-        **How to use this app:**
-        
-        1. **Set up API Key**: Enter your OpenAI API key in the sidebar (or set it in your .env file)
-        2. **Upload PDF**: Upload your bank statement PDF file
-        3. **Configure Options**: Choose model and batch size in the sidebar
-        4. **Process**: Click the "Process Statement" button
-        5. **Review & Edit**: Use the editable table to correct any misclassified categories
-        6. **View Results**: See your categorized transactions and updated summaries
-        7. **Download**: Download the results with your corrections as CSV or JSON
-        
-        **✨ New Features:**
-        - **Editable Categories**: Click on any category in the table to change it using a dropdown
-        - **Real-time Updates**: Summary statistics update automatically when you make changes
-        - **Manual Corrections**: All your edits are preserved and included in downloads
-        
-        **Supported Categories:**
-        - Food & Dining
-        - Transportation
-        - Shopping
-        - Healthcare
-        - Entertainment
-        - Utilities & Bills
-        - Financial Services
-        - Personal Care
-        - Education
-        - Transfer/Refund
-        - Miscellaneous
-        
-        **Note**: Make sure your PDF contains transaction data in a standard bank statement format.
-        """)
+    else:
+        # Show instructions when no data is processed
+        create_instructions()
 
 if __name__ == "__main__":
     if not PROCESSOR_AVAILABLE:
         st.error("""
         ❌ **BankStatementProcessor not found!**
         
-        Please ensure you have the processor file in the same directory and update the import statement:
-        ```python
-        from your_processor_file_name import BankStatementProcessor
-        ```
+        Please ensure you have the processor file in the correct location and update the import statement.
         """)
     else:
         main()
