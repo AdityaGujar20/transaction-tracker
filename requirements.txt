@@ -1,0 +1,10 @@
+pandas
+numpy
+pdfplumber
+streamlit
+plotly
+python-dotenv
+langchain
+langchain-community
+openai
+openpyxl
