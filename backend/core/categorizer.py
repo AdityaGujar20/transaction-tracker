@@ -6,6 +6,7 @@ from typing import Dict, List
 from datetime import datetime
 from dotenv import load_dotenv
 import openai
+from pathlib import Path
 
 load_dotenv()
 api_key = os.getenv("OPENAI_API_KEY")
@@ -37,19 +38,19 @@ class BatchTransactionCategorizer:
             "Personal Care", "Education", "Transfer/Refund", "Miscellaneous"
         ]
 
-    def csv_to_json(self, csv_path: str) -> List[Dict]:
-        df = pd.read_csv(csv_path)
+    def json_to_categorization_format(self, transactions_json: List[Dict]) -> List[Dict]:
+        """Convert transactions JSON to categorization format"""
         categorization_data = []
-        for index, row in df.iterrows():
-            transaction = {
+        for index, transaction in enumerate(transactions_json):
+            tx = {
                 "id": index,
-                "date": str(row.get('Date', '')),
-                "narration": str(row.get('Narration', '')),
-                "amount": float(row.get('Withdrawal(Dr)', 0)) if pd.notna(row.get('Withdrawal(Dr)')) else float(row.get('Deposit(Cr)', 0)),
-                "type": "debit" if pd.notna(row.get('Withdrawal(Dr)')) and row.get('Withdrawal(Dr)') > 0 else "credit"
+                "date": str(transaction.get('Date', '')),
+                "narration": str(transaction.get('Narration', '')),
+                "amount": float(transaction.get('Withdrawal(Dr)', 0)) if transaction.get('Withdrawal(Dr)') else float(transaction.get('Deposit(Cr)', 0)),
+                "type": "debit" if transaction.get('Withdrawal(Dr)') and transaction.get('Withdrawal(Dr)') > 0 else "credit"
             }
-            categorization_data.append(transaction)
-        logger.info(f"Converted {len(categorization_data)} transactions to JSON format")
+            categorization_data.append(tx)
+        logger.info(f"Converted {len(categorization_data)} transactions to categorization format")
         return categorization_data
 
     def create_categorization_prompt(self, transactions: List[Dict]) -> str:
@@ -273,38 +274,23 @@ Transactions to categorize:
             
         return "Miscellaneous"
 
-    def json_results_to_csv(self, original_csv_path: str, categorization_results: Dict[int, str], output_csv_path: str):
-        df = pd.read_csv(original_csv_path)
-        df['Category'] = [categorization_results.get(i, "Miscellaneous") for i in range(len(df))]
-        df.to_csv(output_csv_path, index=False)
-        logger.info(f"Categorized CSV saved to: {output_csv_path}")
-        
-        # Log category distribution
-        category_counts = df['Category'].value_counts()
-        logger.info(f"Category distribution:")
-        for category, count in category_counts.items():
-            logger.info(f"  {category}: {count}")
-        
-        return df
-
-def categorize_transactions(input_csv: str, output_csv: str):
+def categorize_transactions_json(transactions_json: List[Dict], processed_dir: str = "data/processed") -> List[Dict]:
     """
-    Main function to categorize transactions from CSV file.
-    This function is designed to be imported and used in the main pipeline.
+    Main function to categorize transactions from JSON data and save to processed folder.
     
     Args:
-        input_csv (str): Path to input CSV file with bank transactions
-        output_csv (str): Path where categorized CSV will be saved
+        transactions_json (List[Dict]): List of transaction dictionaries from table extractor
+        processed_dir (str): Directory to save the categorized JSON file
         
     Returns:
-        pd.DataFrame: Categorized transactions dataframe
+        List[Dict]: Categorized transactions as JSON
     """
     try:
         print("\n" + "="*60)
         print("🏷️  TRANSACTION CATEGORIZATION")
         print("="*60)
         
-        logger.info(f"Starting transaction categorization for {input_csv}")
+        logger.info(f"Starting transaction categorization for {len(transactions_json)} transactions")
         
         # Check if API key is available
         if not api_key:
@@ -314,25 +300,48 @@ def categorize_transactions(input_csv: str, output_csv: str):
         # Initialize categorizer
         categorizer = BatchTransactionCategorizer(api_key)
         
-        # Convert CSV to JSON format
-        transactions_json = categorizer.csv_to_json(input_csv)
-        logger.info(f"Loaded {len(transactions_json)} transactions")
+        # Convert to categorization format
+        categorization_data = categorizer.json_to_categorization_format(transactions_json)
+        logger.info(f"Prepared {len(categorization_data)} transactions for categorization")
         
         # Categorize transactions (using smaller batch size for better reliability)
-        results = categorizer.batch_categorize_all_transactions(transactions_json, batch_size=8)
+        results = categorizer.batch_categorize_all_transactions(categorization_data, batch_size=8)
         
-        # Save results to CSV
-        df_categorized = categorizer.json_results_to_csv(input_csv, results, output_csv)
+        # Add categories to original transactions
+        categorized_transactions = []
+        for i, transaction in enumerate(transactions_json):
+            categorized_tx = transaction.copy()
+            categorized_tx['Category'] = results.get(i, "Miscellaneous")
+            categorized_transactions.append(categorized_tx)
+        
+        # Save to processed directory
+        processed_path = Path(processed_dir)
+        processed_path.mkdir(parents=True, exist_ok=True)
+        
+        output_file = processed_path / "categorized_transactions.json"
+        with open(output_file, 'w', encoding='utf-8') as f:
+            json.dump(categorized_transactions, f, ensure_ascii=False, indent=2)
+        
+        # Log category distribution
+        category_counts = {}
+        for tx in categorized_transactions:
+            category = tx['Category']
+            category_counts[category] = category_counts.get(category, 0) + 1
+        
+        logger.info("Category distribution:")
+        for category, count in category_counts.items():
+            logger.info(f"  {category}: {count}")
         
         print(f"✅ Transaction categorization completed successfully!")
-        print(f"📁 Categorized data saved to: {output_csv}")
+        print(f"📁 Categorized data saved to: {output_file}")
+        print(f"📊 Total transactions: {len(categorized_transactions)}")
         print("="*60)
         
         logger.info("Transaction categorization completed successfully!")
-        return df_categorized
+        return categorized_transactions
         
     except Exception as e:
-        logger.error(f"Error in categorize_transactions: {str(e)}")
+        logger.error(f"Error in categorize_transactions_json: {str(e)}")
         print(f"❌ Error in transaction categorization: {str(e)}")
         raise e
 
@@ -340,16 +349,17 @@ def categorize_transactions(input_csv: str, output_csv: str):
 def test_categorization():
     """Test function to check if categorization is working"""
     sample_transactions = [
-        {"id": 0, "narration": "UPI/Premsagar super/409326729134/UPI", "amount": 210, "type": "debit"},
-        {"id": 1, "narration": "UPI/METRO CHEMIST a/410850854877/UPI", "amount": 100, "type": "debit"},
-        {"id": 2, "narration": "NACH-MUT-DR-GROWW PAY SERVICES", "amount": 100, "type": "debit"},
-        {"id": 3, "narration": "UPI/ADITYA ANIL GUJ/409403199750/UPI", "amount": 600, "type": "credit"},
-        {"id": 4, "narration": "UPI/ADIDAS NEXUS KO/102159664527/UPI", "amount": 2500, "type": "debit"}
+        {"Date": "2024-01-01", "Narration": "UPI/Premsagar super/409326729134/UPI", "Withdrawal(Dr)": 210, "Deposit(Cr)": 0, "Balance": 5000},
+        {"Date": "2024-01-02", "Narration": "UPI/METRO CHEMIST a/410850854877/UPI", "Withdrawal(Dr)": 100, "Deposit(Cr)": 0, "Balance": 4900},
+        {"Date": "2024-01-03", "Narration": "NACH-MUT-DR-GROWW PAY SERVICES", "Withdrawal(Dr)": 100, "Deposit(Cr)": 0, "Balance": 4800},
+        {"Date": "2024-01-04", "Narration": "UPI/ADITYA ANIL GUJ/409403199750/UPI", "Withdrawal(Dr)": 0, "Deposit(Cr)": 600, "Balance": 5400},
+        {"Date": "2024-01-05", "Narration": "UPI/ADIDAS NEXUS KO/102159664527/UPI", "Withdrawal(Dr)": 2500, "Deposit(Cr)": 0, "Balance": 2900}
     ]
     
-    categorizer = BatchTransactionCategorizer(api_key)
-    results = categorizer.batch_categorize_all_transactions(sample_transactions, batch_size=5)
-    print("Test results:", results)
+    results = categorize_transactions_json(sample_transactions, "test_processed")
+    print("Test results:")
+    for tx in results:
+        print(f"  {tx['Narration'][:30]}... -> {tx['Category']}")
 
 if __name__ == "__main__":
     # Only run test when this file is executed directly

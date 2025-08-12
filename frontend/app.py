@@ -6,13 +6,23 @@ from dotenv import load_dotenv
 import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
+import io
 
 # Import your existing processor class
 try:
-    from processor.tab_cat_merged import BankStatementProcessor
+    # Use the actual package path in this repo
+    from backend.core.tab_cat_merged import BankStatementProcessor
     PROCESSOR_AVAILABLE = True
 except ImportError:
-    PROCESSOR_AVAILABLE = False
+    # If running from within the frontend/ directory, add project root to sys.path
+    try:
+        import sys
+        from pathlib import Path
+        sys.path.append(str(Path(__file__).resolve().parents[1]))
+        from backend.core.tab_cat_merged import BankStatementProcessor
+        PROCESSOR_AVAILABLE = True
+    except Exception:
+        PROCESSOR_AVAILABLE = False
 
 # Load environment variables
 load_dotenv()
@@ -695,14 +705,14 @@ def main():
         editable_df['Date'] = editable_df['Date'].dt.strftime('%d-%m-%Y')
         
         # Create the editable data editor
-        edited_df = st.data_editor(
+            edited_df = st.data_editor(
             editable_df,
             use_container_width=True,
             hide_index=True,
             num_rows="dynamic" if transactions_per_page == "All" else transactions_per_page,
             column_config={
                 "Date": st.column_config.TextColumn("Date", disabled=True, width="small"),
-                "Description": st.column_config.TextColumn("Description", disabled=True, width="large"),
+                    "Narration": st.column_config.TextColumn("Narration", disabled=True, width="large"),
                 "Withdrawal(Dr)": st.column_config.NumberColumn("Withdrawal", disabled=True, format="₹%.2f", width="medium"),
                 "Deposit(Cr)": st.column_config.NumberColumn("Deposit", disabled=True, format="₹%.2f", width="medium"),
                 "Balance": st.column_config.NumberColumn("Balance", disabled=True, format="₹%.2f", width="medium"),
@@ -759,10 +769,12 @@ def main():
             )
         
         with col3:
-            excel_data = final_df.to_excel(index=False, engine='openpyxl')
+            excel_buffer = io.BytesIO()
+            final_df.to_excel(excel_buffer, index=False, engine='openpyxl')
+            excel_buffer.seek(0)
             st.download_button(
                 label="📊 Download Excel",
-                data=excel_data,
+                data=excel_buffer.getvalue(),
                 file_name=f"categorized_transactions_{datetime.now().strftime('%Y%m%d')}.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 use_container_width=True

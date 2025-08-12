@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction Dashboard</title>
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div class="header-content">
+                <h1>
+                    <svg class="header-icon" viewBox="0 0 24 24">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                    </svg>
+                    Financial Dashboard
+                </h1>
+                <div class="header-actions">
+                    <button onclick="refreshDashboard()" class="refresh-btn">
+                        <svg viewBox="0 0 24 24">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <path d="m3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                        </svg>
+                        Refresh
+                    </button>
+                    <a href="/" class="back-btn">
+                        <svg viewBox="0 0 24 24">
+                            <path d="m12 19-7-7 7-7"></path>
+                            <path d="m19 12H5"></path>
+                        </svg>
+                        Back to Upload
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Summary Cards -->
+        <div class="summary-cards">
+            <div class="card">
+                <div class="card-icon income">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 2v20M2 7l10-5 10 5-10 5z"></path>
+                    </svg>
+                </div>
+                <div class="card-content">
+                    <h3>Total Income</h3>
+                    <p class="amount" id="totalIncome">₹0</p>
+                    <span class="subtitle">Credits received</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-icon expense">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 1v6m0 6v6m8-10h-6m-4 0H4"></path>
+                    </svg>
+                </div>
+                <div class="card-content">
+                    <h3>Total Expenses</h3>
+                    <p class="amount" id="totalExpenses">₹0</p>
+                    <span class="subtitle">Debits made</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-icon balance">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z"></path>
+                        <path d="M9 12l2 2 4-4"></path>
+                    </svg>
+                </div>
+                <div class="card-content">
+                    <h3>Net Balance</h3>
+                    <p class="amount" id="netBalance">₹0</p>
+                    <span class="subtitle">Income - Expenses</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-icon transactions">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14,2 14,8 20,8"></polyline>
+                    </svg>
+                </div>
+                <div class="card-content">
+                    <h3>Transactions</h3>
+                    <p class="amount" id="totalTransactions">0</p>
+                    <span class="subtitle">Total count</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart Section -->
+        <div class="charts-grid">
+            <!-- Pie Chart for Category Distribution -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3>Spending by Category</h3>
+                    <div class="chart-controls">
+                        <button onclick="toggleChartType('pie')" class="chart-toggle active" data-type="pie">Pie</button>
+                        <button onclick="toggleChartType('doughnut')" class="chart-toggle" data-type="doughnut">Doughnut</button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+                <div class="chart-legend" id="categoryLegend"></div>
+            </div>
+
+            <!-- Balance Trend Line Chart -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3>Balance Trend Over Time</h3>
+                    <div class="chart-controls">
+                        <select id="timeRange" onchange="updateTimeRange()">
+                            <option value="all">All Time</option>
+                            <option value="30">Last 30 Days</option>
+                            <option value="7">Last 7 Days</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="balanceChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Monthly Income vs Expenses -->
+            <div class="chart-card full-width">
+                <div class="chart-header">
+                    <h3>Monthly Income vs Expenses</h3>
+                    <div class="chart-controls">
+                        <button onclick="toggleBarChart('bar')" class="chart-toggle active" data-type="bar">Bar</button>
+                        <button onclick="toggleBarChart('line')" class="chart-toggle" data-type="line">Line</button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="monthlyChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Top Categories Table -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3>Top Spending Categories</h3>
+                </div>
+                <div class="table-container">
+                    <table id="categoriesTable">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Amount</th>
+                                <th>Transactions</th>
+                                <th>Percentage</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Recent Transactions -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3>Recent Transactions</h3>
+                    <button onclick="toggleTransactionType()" class="chart-toggle" id="transactionToggle">All</button>
+                </div>
+                <div class="transactions-list" id="recentTransactions">
+                    <!-- Transactions will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="loading-spinner"></div>
+            <p>Loading dashboard data...</p>
+        </div>
+
+        <!-- Error Message -->
+        <div class="error-message" id="errorMessage" style="display: none;">
+            <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="15" y1="9" x2="9" y2="15"></line>
+                <line x1="9" y1="9" x2="15" y2="15"></line>
+            </svg>
+            <p>No transaction data found. Please upload and process your bank statement first.</p>
+            <a href="/" class="error-link">Go to Upload Page</a>
+        </div>
+    </div>
+
+    <script src="/static/js/dashboard.js"></script>
+</body>
+</html>

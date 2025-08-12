@@ -1,6 +1,7 @@
 import pdfplumber
 import re
 import pandas as pd
+import json
 from datetime import datetime
 from decimal import Decimal
 
@@ -84,9 +85,13 @@ def extract_transactions_regex(pdf_path):
         })
     return pd.DataFrame(transactions)
 
-def extract_pdf_to_csv(pdf_path, csv_output_path):
-    """Main function to run extraction and save CSV"""
+def extract_pdf_to_json(pdf_path):
+    """Main function to extract PDF and return JSON data"""
     try:
+        print("\n" + "="*60)
+        print("📄 PDF EXTRACTION")
+        print("="*60)
+        
         df = extract_bank_statement_table(pdf_path)
         df = clean_and_format_data(df)
         if df.empty:
@@ -100,9 +105,20 @@ def extract_pdf_to_csv(pdf_path, csv_output_path):
         df = clean_and_format_data(df)
     
     if not df.empty:
-        df.to_csv(csv_output_path, index=False)
-        print(f"✅ Transactions saved to '{csv_output_path}'")
-        return df
+        # Convert DataFrame to JSON format
+        # Handle datetime serialization
+        df_copy = df.copy()
+        df_copy['Date'] = df_copy['Date'].dt.strftime('%Y-%m-%d')
+        
+        # Convert to list of dictionaries
+        transactions_json = df_copy.to_dict('records')
+        
+        print(f"✅ {len(transactions_json)} transactions extracted successfully")
+        print("="*60)
+        return transactions_json
     else:
         print("❌ No transactions found.")
-        return None
+        return []
+
+## For testing (Uncomment the below code when you want to see the output of this code)
+# print(extract_pdf_to_json(pdf_path="../data/raw/kotak-bankstatement-1y-1-4.pdf"))
