@@ -77,9 +77,9 @@ body {
     height: 100%;
     background: linear-gradient(
         135deg, 
-        rgba(10, 10, 10, 0.9) 0%, 
-        rgba(0, 40, 30, 0.8) 50%, 
-        rgba(10, 10, 10, 0.9) 100%
+        rgba(10, 10, 10, 0.6) 0%, 
+        rgba(0, 40, 30, 0.35) 50%, 
+        rgba(10, 10, 10, 0.6) 100%
     );
 }
 
@@ -390,7 +390,7 @@ body {
     padding: var(--spacing-lg);
     cursor: pointer;
     transition: all 0.3s ease;
-    text-align: left;
+    text-align: center; /* center text inside card */
 }
 
 .analysis-card:hover {
@@ -398,12 +398,6 @@ body {
     background: var(--bg-card-hover);
     transform: translateY(-2px);
     box-shadow: 0 8px 25px var(--shadow);
-}
-
-.analysis-card.full-width {
-    grid-column: 1 / -1;
-    text-align: center;
-    background: linear-gradient(135deg, var(--bg-card), rgba(0, 208, 156, 0.05));
 }
 
 .card-icon {
@@ -649,7 +643,9 @@ body {
     padding: var(--spacing-lg); /* Ensure both sides have padding */
     display: flex;
     flex-direction: column;
-    justify-content: flex-start; /* Changed from center to flex-start */
+    align-items: center; /* center horizontally */
+    justify-content: center; /* center vertically */
+    text-align: center; /* center text */
 }
 
 .card-front {
@@ -660,7 +656,7 @@ body {
 .card-back {
     background: var(--bg-card-hover);
     transform: rotateY(180deg);
-    border: 1px solid var(--primary-green);
+    border: none; /* removed inner border */
     z-index: 2;
 }
 
@@ -668,9 +664,9 @@ body {
     height: 100%;
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
-    align-items: stretch;
-    text-align: left;
+    justify-content: center; /* center vertically */
+    align-items: center; /* center horizontally */
+    text-align: center;
     gap: var(--spacing-sm);
 }
 
@@ -727,101 +723,56 @@ body {
 }
 
 .flip-back-btn svg {
+    width: 16px;
+    height: 16px;
     stroke: currentColor;
     fill: none;
     stroke-width: 2;
-    width: 16px;
-    height: 16px;
 }
 
-.error-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: var(--spacing-sm);
-    height: 100%;
-    text-align: center;
+/* Answer text on flipped analysis cards */
+.answer-content {
+    color: var(--text-primary);
+    font-size: 1.1rem; /* increased size */
+    line-height: 1.6;
 }
 
-.error-content p {
-    color: var(--error-color);
-    font-weight: var(--font-weight-medium);
-}
-
-/* Loading state in card back */
-.card-back .loading-spinner {
-    width: 24px;
-    height: 24px;
-    margin: 0 auto var(--spacing-sm);
-}
-
+/* Loading state alignment inside flipped cards */
 .loading-state {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    height: 100%;
     gap: var(--spacing-sm);
-}
-
-.loading-state p {
     color: var(--text-secondary);
-    font-size: 0.875rem;
 }
 
-/* Adjust full-width card for flip effect */
-.analysis-card.full-width {
-    height: 180px; /* Smaller height for full-width card */
-}
-
-.analysis-card.full-width .json-content {
-    font-size: 0.75rem;
-}
-
-/* Action Buttons - Add this to your existing CSS */
+/* Actions under analysis section (Dashboard/Chatbot links) */
 .action-buttons {
     display: flex;
-    gap: var(--spacing-md);
+    gap: var(--spacing-sm);
     justify-content: center;
-    align-items: center;
-    flex-wrap: wrap;
+    margin-top: var(--spacing-md);
 }
 
+/* Chatbot button styles to match dashboard button */
 .chatbot-btn {
     display: inline-flex;
     align-items: center;
     gap: var(--spacing-xs);
     padding: var(--spacing-md) var(--spacing-lg);
-    background: linear-gradient(135deg, var(--primary-green), var(--dark-green));
-    border: none;
-    color: var(--bg-dark);
+    background: transparent;
+    border: 1px solid var(--primary-green);
+    color: var(--primary-green);
     text-decoration: none;
     border-radius: var(--radius-md);
-    font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-medium);
     transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
 }
 
 .chatbot-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 30px rgba(0, 208, 156, 0.4);
-}
-
-.chatbot-btn::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transition: left 0.6s ease;
-}
-
-.chatbot-btn:hover::before {
-    left: 100%;
+    background: var(--primary-green);
+    color: var(--bg-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 25px rgba(0, 208, 156, 0.3);
 }
 
 .chatbot-btn svg {
@@ -830,27 +781,4 @@ body {
     stroke: currentColor;
     fill: none;
     stroke-width: 2;
-    z-index: 1;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .action-buttons {
-        flex-direction: column;
-        gap: var(--spacing-sm);
-    }
-    
-    .dashboard-btn,
-    .chatbot-btn {
-        width: 100%;
-        justify-content: center;
-    }
-    
-    .analysis-card {
-        height: 200px;
-    }
-    
-    .json-content {
-        font-size: 0.75rem;
-    }
 }

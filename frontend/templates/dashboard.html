@@ -3,8 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Transaction Dashboard</title>
+    <title>Financial Analytics Dashboard</title>
     <link rel="stylesheet" href="/static/css/dashboard.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 </head>
 <body>
@@ -12,85 +15,148 @@
         <!-- Header -->
         <header class="dashboard-header">
             <div class="header-content">
-                <h1>
-                    <svg class="header-icon" viewBox="0 0 24 24">
-                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
-                    </svg>
-                    Financial Dashboard
-                </h1>
+                <div class="header-left">
+                    <h1>
+                        <div class="header-icon-wrapper">
+                            <svg class="header-icon" viewBox="0 0 24 24">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                                <path d="m9 16 2 2 4-4"></path>
+                            </svg>
+                        </div>
+                        <div class="header-text">
+                            <div class="header-title">Financial Analytics</div>
+                            <div class="header-subtitle">Dashboard Overview</div>
+                        </div>
+                    </h1>
+                </div>
                 <div class="header-actions">
-                    <button onclick="refreshDashboard()" class="refresh-btn">
-                        <svg viewBox="0 0 24 24">
-                            <polyline points="23 4 23 10 17 10"></polyline>
-                            <path d="m3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-                        </svg>
-                        Refresh
-                    </button>
-                    <a href="/" class="back-btn">
+                    <button type="button" class="back-btn" id="backBtn">
                         <svg viewBox="0 0 24 24">
                             <path d="m12 19-7-7 7-7"></path>
                             <path d="m19 12H5"></path>
                         </svg>
                         Back to Upload
-                    </a>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Quick Stats Bar -->
+            <div class="quick-stats">
+                <div class="stat-item">
+                    <div class="stat-label">Last Updated</div>
+                    <div class="stat-value" id="lastUpdated">Just now</div>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                    <div class="stat-label">Data Period</div>
+                    <div class="stat-value" id="dataPeriod">-</div>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                    <div class="stat-label">Average Transaction</div>
+                    <div class="stat-value" id="avgTransaction">₹0</div>
                 </div>
             </div>
         </header>
 
         <!-- Summary Cards -->
         <div class="summary-cards">
-            <div class="card">
+            <div class="card income-card">
+                <div class="card-background"></div>
                 <div class="card-icon income">
                     <svg viewBox="0 0 24 24">
-                        <path d="M12 2v20M2 7l10-5 10 5-10 5z"></path>
+                        <path d="M7 17L17 7"></path>
+                        <path d="M17 7H7V17"></path>
                     </svg>
                 </div>
                 <div class="card-content">
                     <h3>Total Income</h3>
                     <p class="amount" id="totalIncome">₹0</p>
-                    <span class="subtitle">Credits received</span>
+                    <div class="card-footer">
+                        <span class="trend positive" id="incomeTrend">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M7 14l5-5 5 5"></path>
+                            </svg>
+                            +12.5%
+                        </span>
+                        <span class="subtitle">vs last month</span>
+                    </div>
                 </div>
             </div>
 
-            <div class="card">
+            <div class="card expense-card">
+                <div class="card-background"></div>
                 <div class="card-icon expense">
                     <svg viewBox="0 0 24 24">
-                        <path d="M12 1v6m0 6v6m8-10h-6m-4 0H4"></path>
+                        <path d="M17 7L7 17"></path>
+                        <path d="M7 7H17V17"></path>
                     </svg>
                 </div>
                 <div class="card-content">
                     <h3>Total Expenses</h3>
                     <p class="amount" id="totalExpenses">₹0</p>
-                    <span class="subtitle">Debits made</span>
+                    <div class="card-footer">
+                        <span class="trend negative" id="expenseTrend">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M7 10l5 5 5-5"></path>
+                            </svg>
+                            +8.3%
+                        </span>
+                        <span class="subtitle">vs last month</span>
+                    </div>
                 </div>
             </div>
 
-            <div class="card">
+            <div class="card balance-card">
+                <div class="card-background"></div>
                 <div class="card-icon balance">
                     <svg viewBox="0 0 24 24">
-                        <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z"></path>
-                        <path d="M9 12l2 2 4-4"></path>
+                        <path d="M12 1v6m0 6v6"></path>
+                        <path d="M17 7h-5v5l3 3 2-2z"></path>
+                        <circle cx="12" cy="12" r="10"></circle>
                     </svg>
                 </div>
                 <div class="card-content">
                     <h3>Net Balance</h3>
                     <p class="amount" id="netBalance">₹0</p>
-                    <span class="subtitle">Income - Expenses</span>
+                    <div class="card-footer">
+                        <span class="trend" id="balanceTrend">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M7 14l5-5 5 5"></path>
+                            </svg>
+                            +4.2%
+                        </span>
+                        <span class="subtitle">net growth</span>
+                    </div>
                 </div>
             </div>
 
-            <div class="card">
+            <div class="card transactions-card">
+                <div class="card-background"></div>
                 <div class="card-icon transactions">
                     <svg viewBox="0 0 24 24">
                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                         <polyline points="14,2 14,8 20,8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10,9 9,9 8,9"></polyline>
                     </svg>
                 </div>
                 <div class="card-content">
-                    <h3>Transactions</h3>
+                    <h3>Total Transactions</h3>
                     <p class="amount" id="totalTransactions">0</p>
-                    <span class="subtitle">Total count</span>
+                    <div class="card-footer">
+                        <span class="trend" id="transactionsTrend">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M7 14l5-5 5 5"></path>
+                            </svg>
+                            +156
+                        </span>
+                        <span class="subtitle">this month</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -100,10 +166,25 @@
             <!-- Pie Chart for Category Distribution -->
             <div class="chart-card">
                 <div class="chart-header">
-                    <h3>Spending by Category</h3>
+                    <div class="chart-title-section">
+                        <h3>Spending Distribution</h3>
+                        <p class="chart-subtitle">Breakdown by categories</p>
+                    </div>
                     <div class="chart-controls">
-                        <button onclick="toggleChartType('pie')" class="chart-toggle active" data-type="pie">Pie</button>
-                        <button onclick="toggleChartType('doughnut')" class="chart-toggle" data-type="doughnut">Doughnut</button>
+                        <button onclick="toggleChartType('pie')" class="chart-toggle active" data-type="pie">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
+                                <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
+                            </svg>
+                            Pie
+                        </button>
+                        <button onclick="toggleChartType('doughnut')" class="chart-toggle" data-type="doughnut">
+                            <svg viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <circle cx="12" cy="12" r="4"></circle>
+                            </svg>
+                            Ring
+                        </button>
                     </div>
                 </div>
                 <div class="chart-container">
@@ -115,12 +196,16 @@
             <!-- Balance Trend Line Chart -->
             <div class="chart-card">
                 <div class="chart-header">
-                    <h3>Balance Trend Over Time</h3>
+                    <div class="chart-title-section">
+                        <h3>Balance Trend</h3>
+                        <p class="chart-subtitle">Account balance over time</p>
+                    </div>
                     <div class="chart-controls">
                         <select id="timeRange" onchange="updateTimeRange()">
                             <option value="all">All Time</option>
-                            <option value="30">Last 30 Days</option>
-                            <option value="7">Last 7 Days</option>
+                            <option value="90">Last 3 Months</option>
+                            <option value="30">Last Month</option>
+                            <option value="7">Last Week</option>
                         </select>
                     </div>
                 </div>
@@ -132,10 +217,26 @@
             <!-- Monthly Income vs Expenses -->
             <div class="chart-card full-width">
                 <div class="chart-header">
-                    <h3>Monthly Income vs Expenses</h3>
+                    <div class="chart-title-section">
+                        <h3>Monthly Cash Flow Analysis</h3>
+                        <p class="chart-subtitle">Income vs expenses comparison</p>
+                    </div>
                     <div class="chart-controls">
-                        <button onclick="toggleBarChart('bar')" class="chart-toggle active" data-type="bar">Bar</button>
-                        <button onclick="toggleBarChart('line')" class="chart-toggle" data-type="line">Line</button>
+                        <button onclick="toggleBarChart('bar')" class="chart-toggle active" data-type="bar">
+                            <svg viewBox="0 0 24 24">
+                                <line x1="12" y1="20" x2="12" y2="10"></line>
+                                <line x1="18" y1="20" x2="18" y2="4"></line>
+                                <line x1="6" y1="20" x2="6" y2="16"></line>
+                            </svg>
+                            Bar
+                        </button>
+                        <button onclick="toggleBarChart('line')" class="chart-toggle" data-type="line">
+                            <svg viewBox="0 0 24 24">
+                                <polyline points="22,6 13.5,15.5 8.5,10.5 2,17"></polyline>
+                                <polyline points="16,6 22,6 22,12"></polyline>
+                            </svg>
+                            Line
+                        </button>
                     </div>
                 </div>
                 <div class="chart-container">
@@ -146,16 +247,56 @@
             <!-- Top Categories Table -->
             <div class="chart-card">
                 <div class="chart-header">
-                    <h3>Top Spending Categories</h3>
+                    <div class="chart-title-section">
+                        <h3>Category Analysis</h3>
+                        <p class="chart-subtitle">Top spending categories</p>
+                    </div>
+                    <div class="chart-controls">
+                        <button class="export-btn">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7,10 12,15 17,10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
                 <div class="table-container">
                     <table id="categoriesTable">
                         <thead>
                             <tr>
-                                <th>Category</th>
-                                <th>Amount</th>
-                                <th>Transactions</th>
-                                <th>Percentage</th>
+                                <th>
+                                    <div class="th-content">
+                                        Category
+                                        <svg class="sort-icon" viewBox="0 0 24 24">
+                                            <path d="M7 4v16l4-4M7 20l4-4"></path>
+                                        </svg>
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="th-content">
+                                        Amount
+                                        <svg class="sort-icon" viewBox="0 0 24 24">
+                                            <path d="M7 4v16l4-4M7 20l4-4"></path>
+                                        </svg>
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="th-content">
+                                        Count
+                                        <svg class="sort-icon" viewBox="0 0 24 24">
+                                            <path d="M7 4v16l4-4M7 20l4-4"></path>
+                                        </svg>
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="th-content">
+                                        Share
+                                        <svg class="sort-icon" viewBox="0 0 24 24">
+                                            <path d="M7 4v16l4-4M7 20l4-4"></path>
+                                        </svg>
+                                    </div>
+                                </th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -166,8 +307,18 @@
             <!-- Recent Transactions -->
             <div class="chart-card">
                 <div class="chart-header">
-                    <h3>Recent Transactions</h3>
-                    <button onclick="toggleTransactionType()" class="chart-toggle" id="transactionToggle">All</button>
+                    <div class="chart-title-section">
+                        <h3>Recent Activity</h3>
+                        <p class="chart-subtitle">Latest transactions</p>
+                    </div>
+                    <div class="chart-controls">
+                        <button onclick="toggleTransactionType()" class="chart-toggle filter-btn" id="transactionToggle">
+                            <svg viewBox="0 0 24 24">
+                                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                            </svg>
+                            All
+                        </button>
+                    </div>
                 </div>
                 <div class="transactions-list" id="recentTransactions">
                     <!-- Transactions will be populated here -->
@@ -177,19 +328,31 @@
 
         <!-- Loading Overlay -->
         <div class="loading-overlay" id="loadingOverlay">
-            <div class="loading-spinner"></div>
-            <p>Loading dashboard data...</p>
+            <div class="loading-content">
+                <div class="loading-spinner"></div>
+                <h3>Loading Analytics</h3>
+                <p>Processing your financial data...</p>
+            </div>
         </div>
 
         <!-- Error Message -->
         <div class="error-message" id="errorMessage" style="display: none;">
-            <svg viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="15" y1="9" x2="9" y2="15"></line>
-                <line x1="9" y1="9" x2="15" y2="15"></line>
-            </svg>
+            <div class="error-icon">
+                <svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="15" y1="9" x2="9" y2="15"></line>
+                    <line x1="9" y1="9" x2="15" y2="15"></line>
+                </svg>
+            </div>
+            <h3>No Data Available</h3>
             <p>No transaction data found. Please upload and process your bank statement first.</p>
-            <a href="/" class="error-link">Go to Upload Page</a>
+            <a href="/" class="error-link">
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                Go to Upload Page
+            </a>
         </div>
     </div>
 

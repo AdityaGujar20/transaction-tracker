@@ -14,14 +14,30 @@ const resultsContent = document.getElementById("resultsContent");
 // Global variable to track if upload is in progress
 let isUploading = false;
 
-// File upload handling - Fixed for first-time upload issue
+// Helper: robust PDF detection (handles browsers that don't set correct MIME type)
+function isPdfFile(file) {
+    if (!file) return false;
+    const type = (file.type || '').toLowerCase();
+    if (type.includes('pdf')) return true;
+    const name = (file.name || '').toLowerCase();
+    return name.endsWith('.pdf');
+}
+
+// Ensure selecting the same file twice still triggers change
+pdfFile.addEventListener('click', function () {
+    this.value = '';
+});
+
+// File upload handling - ensure UI and state update on first selection
 pdfFile.addEventListener("change", function(e) {
     const file = e.target.files[0];
     if (file) {
-        if (file.type === 'application/pdf') {
+        if (isPdfFile(file)) {
             updateUploadUI(file);
             enableSubmitButton();
             hideStatusMessage(); // Clear any previous error messages
+            // reset isUploading if it was stuck
+            isUploading = false;
         } else {
             showStatusMessage("Please select a valid PDF file", "error");
             resetUploadUI();
@@ -33,7 +49,7 @@ pdfFile.addEventListener("change", function(e) {
     }
 });
 
-// Drag and drop functionality - Enhanced
+// Drag and drop functionality - Enhanced and robust
 uploadArea.addEventListener('dragover', function(e) {
     e.preventDefault();
     e.stopPropagation();
@@ -54,8 +70,8 @@ uploadArea.addEventListener('drop', function(e) {
     const files = e.dataTransfer.files;
     if (files.length > 0) {
         const file = files[0];
-        if (file.type === 'application/pdf') {
-            // Manually set the file to the input
+        if (isPdfFile(file)) {
+            // Manually set the file to the input and trigger change event
             const dt = new DataTransfer();
             dt.items.add(file);
             pdfFile.files = dt.files;
@@ -63,6 +79,7 @@ uploadArea.addEventListener('drop', function(e) {
             updateUploadUI(file);
             enableSubmitButton();
             hideStatusMessage();
+            pdfFile.dispatchEvent(new Event('change'));
         } else {
             showStatusMessage("Please select a valid PDF file", "error");
         }
@@ -70,7 +87,20 @@ uploadArea.addEventListener('drop', function(e) {
 });
 
 // Click to upload
+// Prevent double file-picker open when clicking the inner "Choose File" button
+const browseBtn = document.querySelector('.browse-btn');
+if (browseBtn) {
+    browseBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (!isUploading) {
+            pdfFile.click();
+        }
+    });
+}
+
 uploadArea.addEventListener('click', function(e) {
+    // If the click originated from the browse button, do nothing here
+    if (e.target.closest('.browse-btn')) return;
     if (!isUploading) {
         pdfFile.click();
     }
@@ -90,7 +120,7 @@ uploadForm.addEventListener("submit", async function(e) {
         return;
     }
 
-    if (file.type !== 'application/pdf') {
+    if (!isPdfFile(file)) {
         showStatusMessage("Please select a valid PDF file", "error");
         return;
     }
@@ -150,12 +180,15 @@ document.addEventListener('DOMContentLoaded', function() {
             const endpoint = this.getAttribute('data-endpoint');
             if (endpoint && !this.classList.contains('flipped')) {
                 flipCard(this, endpoint);
+            } else if (this.classList.contains('flipped')) {
+                // Flip back to front when clicking anywhere on flipped card
+                this.classList.remove('flipped');
             }
         });
     });
 });
 
-// Create flippable card structure - Enhanced
+// Create flippable card structure - Simplified without button
 function createFlippableCard(card) {
     const originalContent = card.innerHTML;
     
@@ -176,7 +209,7 @@ function createFlippableCard(card) {
     `;
 }
 
-// Function to flip card and fetch data - Enhanced with better error handling
+// Function to flip card and fetch data - Clean answer display only
 async function flipCard(card, endpoint) {
     try {
         // Flip the card first
@@ -189,7 +222,7 @@ async function flipCard(card, endpoint) {
         backContent.innerHTML = `
             <div class="loading-state">
                 <div class="loading-spinner"></div>
-                <p>Fetching data...</p>
+                <p>Loading...</p>
             </div>
         `;
         
@@ -201,22 +234,12 @@ async function flipCard(card, endpoint) {
         
         const data = await res.json();
         
-        // Format and display the data on the back of the card
-        let formattedData;
-        if (typeof data === 'object') {
-            formattedData = JSON.stringify(data, null, 2);
-        } else {
-            formattedData = String(data);
-        }
+        // Extract minimal answer from response
+        let displayText = extractMinimalAnswer(data);
         
+        // Display only the answer, no button
         backContent.innerHTML = `
-            <div class="json-content">${formattedData}</div>
-            <button class="flip-back-btn" onclick="flipCardBack(this)">
-                <svg viewBox="0 0 24 24" width="16" height="16">
-                    <path d="M19 12H5M12 19l-7-7 7-7"/>
-                </svg>
-                Back to Front
-            </button>
+            <div class="answer-content">${displayText}</div>
         `;
         
     } catch (err) {
@@ -225,15 +248,88 @@ async function flipCard(card, endpoint) {
         backContent.innerHTML = `
             <div class="error-content">
                 <p>❌ Error fetching data</p>
-                <p style="font-size: 0.75rem; margin-top: 0.5rem;">${err.message}</p>
-                <button class="flip-back-btn" onclick="flipCardBack(this)">
-                    <svg viewBox="0 0 24 24" width="16" height="16">
-                        <path d="M19 12H5M12 19l-7-7 7-7"/>
-                    </svg>
-                    Back to Front
-                </button>
+                <p style="font-size: 0.75rem; margin-top: 0.5rem; color: var(--text-muted);">${err.message}</p>
             </div>
         `;
+    }
+}
+
+// Function to extract minimal answer from API response
+function extractMinimalAnswer(data) {
+    // If it's a simple string, return as-is
+    if (typeof data === 'string') {
+        return data;
+    }
+    
+    // If it's a number, return as string
+    if (typeof data === 'number') {
+        return data.toString();
+    }
+    
+    // If it's an object, try to find the main answer
+    if (typeof data === 'object' && data !== null) {
+        // Common response formats to check
+        const answerFields = [
+            'answer', 'result', 'data', 'response', 'message', 
+            'value', 'amount', 'total', 'summary', 'content'
+        ];
+        
+        // Try to find a direct answer field
+        for (const field of answerFields) {
+            if (data[field] !== undefined && data[field] !== null) {
+                if (typeof data[field] === 'string' || typeof data[field] === 'number') {
+                    return data[field].toString();
+                }
+            }
+        }
+        
+        // If it's an array, try to extract meaningful content
+        if (Array.isArray(data)) {
+            if (data.length === 0) {
+                return 'No data available';
+            }
+            // Join array elements or show count
+            if (data.every(item => typeof item === 'string' || typeof item === 'number')) {
+                return data.join('\n');
+            } else {
+                return `${data.length} items found`;
+            }
+        }
+        
+        // For objects with specific patterns, extract key information
+        if (data.total_spending) {
+            return `Total Spending: ${data.total_spending}`;
+        }
+        if (data.total_income) {
+            return `Total Income: ${data.total_income}`;
+        }
+        if (data.highest_expense) {
+            return `Highest Expense: ${data.highest_expense}`;
+        }
+        if (data.category && data.amount) {
+            return `${data.category}: ${data.amount}`;
+        }
+        
+        // Try to create a brief summary for category breakdowns
+        if (typeof data === 'object') {
+            const keys = Object.keys(data);
+            if (keys.length <= 5) {
+                return keys.map(key => `${key}: ${data[key]}`).join('\n');
+            } else {
+                return `${keys.length} categories found:\n${keys.slice(0, 3).map(key => `${key}: ${data[key]}`).join('\n')}\n... and ${keys.length - 3} more`;
+            }
+        }
+    }
+    
+    // Fallback: return a simplified JSON string for complex objects
+    try {
+        const jsonStr = JSON.stringify(data, null, 2);
+        if (jsonStr.length > 200) {
+            return jsonStr.substring(0, 197) + '...';
+        }
+        return jsonStr;
+    } catch (e) {
+        return 'Unable to display data';
     }
 }
 
