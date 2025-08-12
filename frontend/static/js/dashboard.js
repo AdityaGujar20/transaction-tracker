@@ -83,7 +83,7 @@ function setupEventListeners() {
     window.addEventListener('resize', debounce(handleResize, 300));
 }
 
-// Handle back navigation with smooth transition
+// FIXED: Handle back navigation without refreshing home page
 async function handleBackNavigation(e) {
     e.preventDefault();
     
@@ -113,6 +113,9 @@ async function handleBackNavigation(e) {
         // Small delay for visual feedback
         await new Promise(resolve => setTimeout(resolve, 200));
 
+        // Clean up dashboard resources before navigation
+        cleanupDashboard();
+
         // Swap body content
         document.body.innerHTML = doc.body.innerHTML;
         document.body.style.opacity = '1';
@@ -120,8 +123,15 @@ async function handleBackNavigation(e) {
         // Ensure home styles are loaded
         ensureStylesheet('/static/css/styles.css');
 
-        // Load home page script
-        loadScript('/static/js/scripts.js');
+        // FIXED: Only load the home script if it's not already loaded
+        // and preserve existing functionality without re-execution
+        if (!window.homePageInitialized) {
+            loadScript('/static/js/scripts.js');
+            window.homePageInitialized = true;
+        } else {
+            // Re-initialize only the necessary parts for home page
+            initializeHomePage();
+        }
 
         // Update URL
         window.history.pushState({ page: 'home' }, '', '/');
@@ -132,6 +142,53 @@ async function handleBackNavigation(e) {
         backBtn.disabled = false;
         // Fallback to hard navigation
         setTimeout(() => window.location.href = '/', 100);
+    }
+}
+
+// NEW: Clean up dashboard resources
+function cleanupDashboard() {
+    // Destroy all charts to prevent memory leaks
+    [categoryChart, balanceChart, monthlyChart].forEach(chart => {
+        if (chart) {
+            chart.destroy();
+        }
+    });
+    
+    // Reset chart variables
+    categoryChart = null;
+    balanceChart = null;
+    monthlyChart = null;
+    
+    // Clear data
+    transactionData = [];
+    dashboardStats = {};
+    
+    // Remove any dashboard-specific event listeners
+    window.removeEventListener('resize', handleResize);
+    
+    console.log('Dashboard resources cleaned up');
+}
+
+// NEW: Initialize home page without full reload
+function initializeHomePage() {
+    // Re-setup home page functionality without re-executing everything
+    const uploadForm = document.getElementById("uploadForm");
+    const pdfFile = document.getElementById("pdfFile");
+    const uploadArea = document.getElementById("uploadArea");
+    
+    // Only reinitialize if elements exist and aren't already initialized
+    if (uploadForm && !uploadForm.dataset.initialized) {
+        // Mark as initialized to prevent double initialization
+        uploadForm.dataset.initialized = 'true';
+        pdfFile.dataset.initialized = 'true';
+        uploadArea.dataset.initialized = 'true';
+        
+        // Call the home page initialization function if it exists
+        if (window.initializeHomePageComponents) {
+            window.initializeHomePageComponents();
+        }
+        
+        console.log('Home page components re-initialized');
     }
 }
 
@@ -148,10 +205,24 @@ function ensureStylesheet(href) {
     }
 }
 
+// IMPROVED: Load script only if needed
 function loadScript(src) {
+    // Check if script is already loaded
+    const existingScript = document.querySelector(`script[src="${src}"]`);
+    if (existingScript) {
+        console.log('Script already loaded:', src);
+        return;
+    }
+    
     const script = document.createElement('script');
     script.src = src;
     script.defer = true;
+    script.onload = function() {
+        console.log('Script loaded successfully:', src);
+    };
+    script.onerror = function() {
+        console.error('Failed to load script:', src);
+    };
     document.body.appendChild(script);
 }
 
