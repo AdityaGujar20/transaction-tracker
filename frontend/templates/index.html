@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="/static/css/styles.css?v={{ timestamp }}">
 </head>
 <body>
     <!-- Video Background -->
@@ -142,7 +142,7 @@
 <!-- Dashboard Link -->
 <div class="dashboard-section">
     <div class="action-buttons">
-        <a href="/dashboard" class="dashboard-btn">
+        <button type="button" class="dashboard-btn" onclick="navigateToDashboard()">
             <svg viewBox="0 0 24 24">
                 <rect x="3" y="3" width="7" height="7"/>
                 <rect x="14" y="3" width="7" height="7"/>
@@ -150,7 +150,7 @@
                 <rect x="3" y="14" width="7" height="7"/>
             </svg>
             View Dashboard
-        </a>
+        </button>
         <a href="/chatbot" class="chatbot-btn">
             <svg viewBox="0 0 24 24">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
@@ -166,6 +166,6 @@
         </section>
     </div>
 
-    <script src="/static/js/scripts.js"></script>
+    <script src="/static/js/scripts.js?v={{ timestamp }}"></script>
 </body>
 </html>
