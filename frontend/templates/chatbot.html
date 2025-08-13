@@ -7,14 +7,14 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/css/styles.css">
-    <link rel="stylesheet" href="/static/css/chatbot.css">
+    <link rel="stylesheet" href="/static/css/styles.css?v={{ timestamp }}">
+    <link rel="stylesheet" href="/static/css/chatbot.css?v={{ timestamp }}">
 </head>
 <body>
     <!-- Video Background -->
     <div class="video-background">
         <video autoplay muted loop>
-            <source src="https://assets.mixkit.co/videos/preview/mixkit-digital-rain-of-binary-code-1001-large.mp4" type="video/mp4">
+			<source src="/static/video/background.mp4" type="video/mp4">
         </video>
         <div class="video-overlay"></div>
     </div>
@@ -72,11 +72,22 @@
                             <button class="question-chip" data-question="What was my highest single expense?">
                                 📈 Highest single expense?
                             </button>
-                            <button class="question-chip" data-question="Show me my income vs expenses">
+							<button class="question-chip" data-question="How much income did I receive this month?">
                                 ⚖️ Income vs expenses?
                             </button>
                         </div>
                     </div>
+
+					<!-- Health alert (shown when no data is available) -->
+					<div id="healthAlert" class="health-alert" style="display:none; margin-top: 12px;">
+						<p id="healthAlertText" style="margin-bottom: 8px;">Transaction data not found. Please upload and process your bank statement first.</p>
+						<a href="/" class="back-btn">
+							<svg viewBox="0 0 24 24">
+								<path d="M19 12H5m7-7l-7 7 7 7"/>
+							</svg>
+							Go to Home
+						</a>
+					</div>
                 </div>
             </div>
 
@@ -109,6 +120,6 @@
         </main>
     </div>
 
-    <script src="/static/js/chatbot.js"></script>
+    <script src="/static/js/chatbot.js?v={{ timestamp }}"></script>
 </body>
 </html>

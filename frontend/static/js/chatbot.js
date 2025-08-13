@@ -6,16 +6,19 @@ const charCount = document.getElementById('charCount');
 const aiStatus = document.getElementById('aiStatus');
 const welcomeSection = document.getElementById('welcomeSection');
 const questionChips = document.querySelectorAll('.question-chip');
+const healthAlert = document.getElementById('healthAlert');
+const healthAlertText = document.getElementById('healthAlertText');
 
 // Chat state
 let isTyping = false;
 let messageCount = 0;
 
-// Initialize chatbot
-document.addEventListener('DOMContentLoaded', function() {
+// Initialize chatbot (single init)
+document.addEventListener('DOMContentLoaded', async function() {
     setupEventListeners();
     updateCharCount();
-    console.log('Financial AI Assistant initialized successfully!');
+    await checkHealth();
+    initializeChat();
 });
 
 // Event Listeners
@@ -91,45 +94,26 @@ async function sendMessage() {
     // Show typing indicator
     showTypingIndicator();
     
-    // Simulate AI thinking time
-    setTimeout(async () => {
-        try {
-            // Try to send to backend first
-            const response = await fetch('/api/chat', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ message: message })
-            });
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            
-            // Hide typing indicator
-            hideTypingIndicator();
-            
-            // Add AI response
-            addMessage(data.response || data.message || 'I apologize, but I could not process your request.', 'ai');
-            
-        } catch (error) {
-            console.error('Chat error:', error);
-            console.log('Using mock response as fallback...');
-            
-            // Hide typing indicator
-            hideTypingIndicator();
-            
-            // Use mock response as fallback
-            const mockResponse = getMockResponse(message);
-            addMessage(mockResponse, 'ai');
-        }
+    try {
+        const response = await fetch('/chatbot/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message })
+        });
         
-        // Update AI status
-        updateAIStatus();
-    }, 1000 + Math.random() * 2000); // Random delay between 1-3 seconds for realistic feel
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        hideTypingIndicator();
+        addMessage(data.response || data.message || 'I apologize, but I could not process your request.', 'ai');
+    } catch (error) {
+        hideTypingIndicator();
+        addMessage('Sorry, something went wrong while contacting the chatbot service.', 'ai');
+        console.error('Chat error:', error);
+    }
+    
+    updateAIStatus();
 }
 
 // Add message to chat
@@ -180,16 +164,31 @@ function addMessage(text, sender) {
     messageCount++;
 }
 
-// Initialize on load
-document.addEventListener('DOMContentLoaded', function() {
-    setupEventListeners();
-    updateCharCount();
-    
-    // Initialize with a welcome message after a short delay
-    initializeChat();
-    
-    console.log('Financial AI Assistant initialized successfully!');
-});
+// Health check and stats
+async function checkHealth() {
+    try {
+        const res = await fetch('/chatbot/health');
+        const data = await res.json();
+        if (data.status !== 'healthy') {
+            healthAlert.style.display = 'block';
+            healthAlertText.textContent = data.message || 'Chatbot is not ready.';
+            aiStatus.textContent = 'Data unavailable';
+            chatInput.disabled = true;
+            sendBtn.disabled = true;
+        } else {
+            healthAlert.style.display = 'none';
+            aiStatus.textContent = 'Ready to analyze your transactions';
+            chatInput.disabled = false;
+            updateSendButton();
+        }
+    } catch (e) {
+        healthAlert.style.display = 'block';
+        healthAlertText.textContent = 'Unable to reach chatbot service.';
+        aiStatus.textContent = 'Service unreachable';
+        chatInput.disabled = true;
+        sendBtn.disabled = true;
+    }
+}
 
 // Format message content
 function formatMessage(text) {
@@ -263,27 +262,7 @@ function scrollToBottom() {
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// Mock responses for testing (remove when backend is ready)
-const mockResponses = {
-    "what's my total spending": "Based on your transaction data, your total spending is $2,450.75 across all categories.",
-    "which category do i spend most on": "Your highest spending category is Food & Dining with $890.25 (36.3% of total expenses).",
-    "what was my highest single expense": "Your highest single transaction was $285.00 at Electronics Store on March 15th.",
-    "show me my income vs expenses": "Income: $3,200.00\nExpenses: $2,450.75\nNet Savings: $749.25 (23.4% savings rate)",
-    "default": "I can help you analyze your financial data. Try asking about your spending patterns, categories, income, or specific transactions!"
-};
-
-// Get mock response (temporary function)
-function getMockResponse(message) {
-    const lowerMessage = message.toLowerCase();
-    
-    for (const [key, response] of Object.entries(mockResponses)) {
-        if (key !== 'default' && lowerMessage.includes(key.toLowerCase())) {
-            return response;
-        }
-    }
-    
-    return mockResponses.default;
-}
+// Remove mock fallback now that backend endpoints exist
 
 // Enhanced error handling
 window.addEventListener('error', function(e) {

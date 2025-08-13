@@ -16,21 +16,32 @@ logger = logging.getLogger(__name__)
 
 class BatchTransactionCategorizer:
     def __init__(self, openai_api_key: str):
-        """Initialize OpenAI client - compatible with both old and new versions"""
-        # Set API key
+        """Initialize OpenAI client with proper error handling"""
+        # Set API key for backward compatibility
         openai.api_key = openai_api_key
         
-        # Check OpenAI version and initialize accordingly
+        # Initialize client with error handling
+        self.client = None
+        self.use_new_client = False
+        
         try:
-            # For OpenAI v1.0+ (new version)
+            # Try to initialize OpenAI v1.0+ client
             self.client = openai.OpenAI(api_key=openai_api_key)
             self.use_new_client = True
             logger.info("Using OpenAI v1.0+ client")
-        except AttributeError:
-            # For OpenAI v0.x (old version)
-            self.client = None
-            self.use_new_client = False
-            logger.info("Using OpenAI v0.x client")
+        except Exception as e:
+            logger.warning(f"Failed to initialize OpenAI v1.0+ client: {e}")
+            try:
+                # Fallback: check if old version methods are available
+                if hasattr(openai, 'ChatCompletion'):
+                    self.client = None
+                    self.use_new_client = False
+                    logger.info("Using OpenAI v0.x client")
+                else:
+                    raise Exception("No compatible OpenAI client found")
+            except Exception as e2:
+                logger.error(f"Failed to initialize any OpenAI client: {e2}")
+                raise Exception(f"OpenAI client initialization failed: {e2}")
         
         self.categories = [
             "Food & Dining", "Transportation", "Shopping", "Healthcare",
@@ -93,7 +104,7 @@ Transactions to categorize:
     def call_openai_api(self, prompt: str) -> str:
         """Call OpenAI API - compatible with both old and new versions"""
         try:
-            if self.use_new_client:
+            if self.use_new_client and self.client:
                 # New client (v1.0+)
                 response = self.client.chat.completions.create(
                     model="gpt-3.5-turbo",
@@ -103,7 +114,7 @@ Transactions to categorize:
                 )
                 return response.choices[0].message.content.strip()
             else:
-                # Old client (v0.x)
+                # Old client (v0.x) or fallback
                 response = openai.ChatCompletion.create(
                     model="gpt-3.5-turbo",
                     messages=[{"role": "user", "content": prompt}],
@@ -113,6 +124,23 @@ Transactions to categorize:
                 return response.choices[0].message.content.strip()
         except Exception as e:
             logger.error(f"OpenAI API call failed: {str(e)}")
+            # Try alternative initialization
+            if "proxies" in str(e).lower():
+                logger.info("Trying alternative OpenAI client initialization...")
+                try:
+                    # Create a new client without problematic parameters
+                    import openai as openai_alt
+                    openai_alt.api_key = os.getenv("OPENAI_API_KEY")
+                    response = openai_alt.ChatCompletion.create(
+                        model="gpt-3.5-turbo",
+                        messages=[{"role": "user", "content": prompt}],
+                        temperature=0.1,
+                        max_tokens=1000
+                    )
+                    return response.choices[0].message.content.strip()
+                except Exception as e2:
+                    logger.error(f"Alternative API call also failed: {str(e2)}")
+                    raise e2
             raise e
 
     def batch_categorize_all_transactions(self, transactions: List[Dict], batch_size: int = 10) -> Dict[int, str]:

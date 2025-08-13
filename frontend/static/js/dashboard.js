@@ -83,148 +83,30 @@ function setupEventListeners() {
     window.addEventListener('resize', debounce(handleResize, 300));
 }
 
-// FIXED: Handle back navigation without refreshing home page
-async function handleBackNavigation(e) {
+// Navigate back to home page
+function handleBackNavigation(e) {
     e.preventDefault();
     
-    // Add loading state
+    // Add a small delay to show user feedback
     const backBtn = e.target.closest('button');
     const originalContent = backBtn.innerHTML;
+    
     backBtn.innerHTML = `
-        <div class="loading-spinner" style="width: 16px; height: 16px; margin: 0;"></div>
-        Loading...
+        <svg viewBox="0 0 24 24" style="width: 16px; height: 16px;">
+            <path d="m12 19-7-7 7-7"></path>
+            <path d="m19 12H5"></path>
+        </svg>
+        Going back...
     `;
     backBtn.disabled = true;
-
-    try {
-        const res = await fetch('/', { 
-            headers: { 'X-Requested-With': 'fetch' } 
-        });
-        
-        if (!res.ok) throw new Error('Navigation failed');
-        
-        const html = await res.text();
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-
-        // Fade out current content
-        document.body.style.opacity = '0.7';
-        
-        // Small delay for visual feedback
-        await new Promise(resolve => setTimeout(resolve, 200));
-
-        // Clean up dashboard resources before navigation
-        cleanupDashboard();
-
-        // Swap body content
-        document.body.innerHTML = doc.body.innerHTML;
-        document.body.style.opacity = '1';
-
-        // Ensure home styles are loaded
-        ensureStylesheet('/static/css/styles.css');
-
-        // FIXED: Only load the home script if it's not already loaded
-        // and preserve existing functionality without re-execution
-        if (!window.homePageInitialized) {
-            loadScript('/static/js/scripts.js');
-            window.homePageInitialized = true;
-        } else {
-            // Re-initialize only the necessary parts for home page
-            initializeHomePage();
-        }
-
-        // Update URL
-        window.history.pushState({ page: 'home' }, '', '/');
-        
-    } catch (err) {
-        console.error('Soft navigation failed:', err);
-        backBtn.innerHTML = originalContent;
-        backBtn.disabled = false;
-        // Fallback to hard navigation
-        setTimeout(() => window.location.href = '/', 100);
-    }
+    
+    // Navigate after a short delay for visual feedback
+    setTimeout(() => {
+        window.location.href = '/';
+    }, 200);
 }
 
-// NEW: Clean up dashboard resources
-function cleanupDashboard() {
-    // Destroy all charts to prevent memory leaks
-    [categoryChart, balanceChart, monthlyChart].forEach(chart => {
-        if (chart) {
-            chart.destroy();
-        }
-    });
-    
-    // Reset chart variables
-    categoryChart = null;
-    balanceChart = null;
-    monthlyChart = null;
-    
-    // Clear data
-    transactionData = [];
-    dashboardStats = {};
-    
-    // Remove any dashboard-specific event listeners
-    window.removeEventListener('resize', handleResize);
-    
-    console.log('Dashboard resources cleaned up');
-}
 
-// NEW: Initialize home page without full reload
-function initializeHomePage() {
-    // Re-setup home page functionality without re-executing everything
-    const uploadForm = document.getElementById("uploadForm");
-    const pdfFile = document.getElementById("pdfFile");
-    const uploadArea = document.getElementById("uploadArea");
-    
-    // Only reinitialize if elements exist and aren't already initialized
-    if (uploadForm && !uploadForm.dataset.initialized) {
-        // Mark as initialized to prevent double initialization
-        uploadForm.dataset.initialized = 'true';
-        pdfFile.dataset.initialized = 'true';
-        uploadArea.dataset.initialized = 'true';
-        
-        // Call the home page initialization function if it exists
-        if (window.initializeHomePageComponents) {
-            window.initializeHomePageComponents();
-        }
-        
-        console.log('Home page components re-initialized');
-    }
-}
-
-// Utility functions
-function ensureStylesheet(href) {
-    const exists = Array.from(document.head.querySelectorAll('link[rel="stylesheet"]'))
-        .some(l => l.getAttribute('href') === href);
-    
-    if (!exists) {
-        const link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = href;
-        document.head.appendChild(link);
-    }
-}
-
-// IMPROVED: Load script only if needed
-function loadScript(src) {
-    // Check if script is already loaded
-    const existingScript = document.querySelector(`script[src="${src}"]`);
-    if (existingScript) {
-        console.log('Script already loaded:', src);
-        return;
-    }
-    
-    const script = document.createElement('script');
-    script.src = src;
-    script.defer = true;
-    script.onload = function() {
-        console.log('Script loaded successfully:', src);
-    };
-    script.onerror = function() {
-        console.error('Failed to load script:', src);
-    };
-    document.body.appendChild(script);
-}
 
 function debounce(func, wait) {
     let timeout;
@@ -286,13 +168,20 @@ async function loadDashboardData() {
         
         const data = await response.json();
         
+        console.log('📊 Raw data received:', data);
+        console.log('📊 Data type:', typeof data);
+        console.log('📊 Is array:', Array.isArray(data));
+        console.log('📊 Data length:', data ? data.length : 'undefined');
+        
         if (!data || !Array.isArray(data) || data.length === 0) {
+            console.error('❌ Data validation failed:', { data, isArray: Array.isArray(data), length: data?.length });
             throw new Error('No transaction data available');
         }
         
         transactionData = data;
         
         console.log(`✅ Loaded ${transactionData.length} transactions`);
+        console.log('📊 Sample transaction:', transactionData[0]);
         
         // Process and display data with smooth animations
         await processAndDisplayData();
@@ -302,6 +191,11 @@ async function loadDashboardData() {
         
     } catch (error) {
         console.error('❌ Dashboard loading failed:', error);
+        console.error('❌ Error details:', {
+            name: error.name,
+            message: error.message,
+            stack: error.stack
+        });
         showLoadingState(false);
         
         if (error.name === 'AbortError') {
