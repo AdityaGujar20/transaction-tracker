@@ -1,12 +1,13 @@
-import json
+from pathlib import Path
+import openai
+from dotenv import load_dotenv
 import pandas as pd
+
 import os
+import json
 import logging
 from typing import Dict, List
 from datetime import datetime
-from dotenv import load_dotenv
-import openai
-from pathlib import Path
 
 load_dotenv()
 api_key = os.getenv("OPENAI_API_KEY")

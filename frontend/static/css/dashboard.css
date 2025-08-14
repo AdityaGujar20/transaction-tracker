@@ -1155,4 +1155,263 @@ tbody td {
         align-self: stretch;
         align-items: flex-start;
     }
+}/* MacBook
+ Air 13-inch Optimization (1440x900 @ 100% zoom) */
+@media screen and (max-width: 1440px) and (max-height: 900px) {
+    body {
+        min-height: 100vh;
+        overflow-x: hidden;
+    }
+    
+    .dashboard-container {
+        padding: 16px;
+        max-width: 1400px;
+        min-height: calc(100vh - 32px);
+    }
+    
+    /* Optimize charts grid for MacBook Air */
+    .charts-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+    
+    .chart-card {
+        grid-column: span 1;
+    }
+    
+    .chart-card.full-width {
+        grid-column: span 2;
+    }
+    
+    /* Specific layout for MacBook Air */
+    .chart-card:nth-child(1) { grid-column: span 1; } /* Category chart */
+    .chart-card:nth-child(2) { grid-column: span 1; } /* Balance chart */
+    .chart-card:nth-child(3) { grid-column: span 2; } /* Monthly chart - full width */
+    .chart-card:nth-child(4) { grid-column: span 1; } /* Categories table */
+    .chart-card:nth-child(5) { grid-column: span 1; } /* Recent transactions */
+    
+    /* Compact Header */
+    .dashboard-header {
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .header-left h1 {
+        font-size: 24px;
+        gap: 12px;
+    }
+    
+    .header-icon-wrapper {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .header-icon {
+        width: 18px;
+        height: 18px;
+    }
+    
+    .header-text .header-title {
+        font-size: 24px;
+    }
+    
+    .header-text .header-subtitle {
+        font-size: 12px;
+    }
+    
+    /* Compact Quick Stats */
+    .quick-stats {
+        gap: 16px;
+        padding: 12px 0;
+    }
+    
+    .stat-label {
+        font-size: 10px;
+    }
+    
+    .stat-value {
+        font-size: 13px;
+    }
+    
+    .stat-divider {
+        height: 24px;
+    }
+    
+    /* Compact Summary Cards */
+    .summary-cards {
+        gap: 16px;
+        margin-bottom: 20px;
+        grid-template-columns: repeat(4, 1fr);
+    }
+    
+    .card {
+        padding: 20px;
+        min-height: 120px;
+        gap: 16px;
+    }
+    
+    .card-icon {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .card-content h3 {
+        font-size: 14px;
+        margin-bottom: 8px;
+    }
+    
+    .card-content .amount {
+        font-size: 20px;
+        margin-bottom: 8px;
+    }
+    
+    .card-footer {
+        gap: 8px;
+    }
+    
+    .trend {
+        font-size: 11px;
+        padding: 2px 6px;
+    }
+    
+    .trend svg {
+        width: 10px;
+        height: 10px;
+    }
+    
+    .subtitle {
+        font-size: 10px;
+    }
+    
+    /* Compact Charts Grid */
+    .charts-grid {
+        gap: 16px;
+    }
+    
+    .chart-card {
+        padding: 16px;
+    }
+    
+    .chart-header {
+        margin-bottom: 12px;
+    }
+    
+    .chart-title-section h3 {
+        font-size: 16px;
+        margin-bottom: 4px;
+    }
+    
+    .chart-subtitle {
+        font-size: 11px;
+    }
+    
+    .chart-container {
+        height: 200px; /* Reduced from default */
+    }
+    
+    /* Compact Table */
+    .table-container {
+        max-height: 200px;
+    }
+    
+    .table-container table th,
+    .table-container table td {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+    
+    /* Compact Transactions List */
+    .transactions-list {
+        max-height: 200px;
+    }
+    
+    .transaction-item {
+        padding: 8px;
+        gap: 8px;
+    }
+    
+    .transaction-category {
+        font-size: 11px;
+    }
+    
+    .transaction-description {
+        font-size: 12px;
+    }
+    
+    .transaction-date {
+        font-size: 10px;
+    }
+    
+    .amount-value {
+        font-size: 13px;
+    }
+    
+    .amount-type {
+        font-size: 10px;
+    }
+    
+    /* Compact Chart Controls */
+    .chart-controls {
+        gap: 8px;
+    }
+    
+    .chart-toggle {
+        padding: 4px 8px;
+        font-size: 11px;
+    }
+    
+    .chart-toggle svg {
+        width: 12px;
+        height: 12px;
+    }
+    
+    /* Compact Legend */
+    .chart-legend {
+        gap: 8px;
+        margin-top: 8px;
+    }
+    
+    .legend-item {
+        font-size: 11px;
+        gap: 6px;
+    }
+    
+    .legend-color {
+        width: 8px;
+        height: 8px;
+    }
+}
+
+/* Extra compact for smaller MacBook screens */
+@media screen and (max-width: 1440px) and (max-height: 800px) {
+    .dashboard-container {
+        padding: 12px;
+    }
+    
+    .dashboard-header {
+        padding: 16px;
+        margin-bottom: 16px;
+    }
+    
+    .summary-cards {
+        margin-bottom: 16px;
+        gap: 12px;
+    }
+    
+    .card {
+        padding: 16px;
+        min-height: 100px;
+    }
+    
+    .card-content .amount {
+        font-size: 18px;
+    }
+    
+    .charts-grid {
+        gap: 12px;
+    }
+    
+    .chart-container {
+        height: 180px;
+    }
 }

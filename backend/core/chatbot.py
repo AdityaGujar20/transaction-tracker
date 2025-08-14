@@ -1,14 +1,15 @@
-import json
-import os
-from fastapi import HTTPException
-from fastapi.responses import JSONResponse
-from datetime import datetime
-from pathlib import Path
-import re
 from openai import OpenAI
 from dotenv import load_dotenv
+from fastapi import HTTPException
+from fastapi.responses import JSONResponse
+from pathlib import Path
 
-# Load environment variables
+import json
+import os
+from datetime import datetime
+import re
+
+
 load_dotenv()
 
 # Initialize OpenAI client with error handling
@@ -167,8 +168,7 @@ class TransactionChatbot:
         if not self.transactions_data:
             return None
         
-        highest = max(self.transactions_data, 
-                     key=lambda x: float(x.get('Withdrawal(Dr)', 0)))
+        highest = max(self.transactions_data, key=lambda x: float(x.get('Withdrawal(Dr)', 0)))
         
         withdrawal = float(highest.get('Withdrawal(Dr)', 0))
         if withdrawal > 0:
@@ -181,8 +181,7 @@ class TransactionChatbot:
             return []
         
         # Sort by date (assuming YYYY-MM-DD format)
-        sorted_transactions = sorted(self.transactions_data, 
-                                   key=lambda x: x.get('Date', ''), reverse=True)
+        sorted_transactions = sorted(self.transactions_data, key=lambda x: x.get('Date', ''), reverse=True)
         return sorted_transactions[:limit]
     
     def get_balance_info(self):
@@ -191,8 +190,7 @@ class TransactionChatbot:
             return None
         
         # Get the transaction with the latest date
-        latest_transaction = max(self.transactions_data, 
-                               key=lambda x: x.get('Date', ''))
+        latest_transaction = max(self.transactions_data, key=lambda x: x.get('Date', ''))
         return float(latest_transaction.get('Balance', 0))
     
     def get_transaction_context(self):

@@ -40,9 +40,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Initialize dashboard components
 function initializeDashboard() {
-    updateLastUpdated();
-    setInterval(updateLastUpdated, 60000); // Update every minute
-    
     // Add smooth scrolling
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {
@@ -129,16 +126,7 @@ function handleResize() {
     });
 }
 
-// Update last updated timestamp
-function updateLastUpdated() {
-    const element = document.getElementById('lastUpdated');
-    if (element) {
-        element.textContent = new Date().toLocaleTimeString('en-IN', {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    }
-}
+
 
 // Load transaction data with enhanced error handling
 async function loadDashboardData() {

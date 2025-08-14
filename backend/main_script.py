@@ -1,11 +1,12 @@
-# Fixed main pipeline script
+import json
+
 from core.table_extractor import extract_pdf_to_json
 from core.categorizer import categorize_transactions_json
-import json
 
 def main():
     """Main pipeline function"""
-    pdf_path = "data/raw/kotak-bankstatement-1y-1-4.pdf"
+    # pdf_path = "data/raw/kotak-bankstatement-1y-1-4.pdf"
+    pdf_path = "data/raw"
     processed_dir = "data/processed"
     
     print("🚀 Starting Bank Statement Processing Pipeline")
