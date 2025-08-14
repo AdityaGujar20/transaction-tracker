@@ -1,12 +1,1 @@
-# Folders
-sample-test-output/
-
-# Environment Variables
 .env
-
-# cache folders and files
-__pycache__/
-.vscode/
-
-# macOS system files
-.DS_Store
