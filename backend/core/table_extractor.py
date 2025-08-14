@@ -1,9 +1,11 @@
 import pdfplumber
-import re
 import pandas as pd
+
+import re
 import json
 from datetime import datetime
 from decimal import Decimal
+
 
 def extract_bank_statement_table(pdf_path):
     transactions = []

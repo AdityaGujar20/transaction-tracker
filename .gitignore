@@ -1,11 +1,8 @@
-
 # Folders
-notebooks/
 sample-test-output/
-copyclip/
 
 # Environment Variables
 .env
 
-# 
+# cache folders and files
 __pycache__/

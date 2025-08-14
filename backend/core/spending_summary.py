@@ -1,14 +1,13 @@
-import os
-from datetime import datetime
-
-import json
 import pandas as pd
-
 from langchain_community.chat_models import ChatOpenAI
 from langchain_community.callbacks.manager import get_openai_callback
 from langchain.schema import HumanMessage, SystemMessage
-
 from dotenv import load_dotenv
+
+import os
+from datetime import datetime
+import json
+
 
 load_dotenv()
 api_key = os.getenv("OPENAI_API_KEY")

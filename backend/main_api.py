@@ -2,12 +2,14 @@ from fastapi import FastAPI, Request, Response
 from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from api import routes_pipeline, faq, chatbot_routes
+
 from pathlib import Path
 import shutil
 import os
 import time
 from starlette.responses import Response as StarletteResponse
+
+from api import routes_pipeline, faq, chatbot_routes
 
 app = FastAPI(
     title="Transaction Tracker APIs",

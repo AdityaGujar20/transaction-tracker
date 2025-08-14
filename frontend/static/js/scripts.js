@@ -24,29 +24,29 @@ function isPdfFile(file) {
 }
 
 // Ensure selecting the same file twice still triggers change
-pdfFile.addEventListener("click", function () {
-  this.value = "";
+pdfFile.addEventListener('click', function () {
+    this.value = '';
 });
 
 // File upload handling - ensure UI and state update on first selection
-pdfFile.addEventListener("change", function (e) {
-  const file = e.target.files[0];
-  if (file) {
-    if (isPdfFile(file)) {
-      updateUploadUI(file);
-      enableSubmitButton();
-      hideStatusMessage(); // Clear any previous error messages
-      // reset isUploading if it was stuck
-      isUploading = false;
+pdfFile.addEventListener("change", function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        if (isPdfFile(file)) {
+            updateUploadUI(file);
+            enableSubmitButton();
+            hideStatusMessage(); // Clear any previous error messages
+            // reset isUploading if it was stuck
+            isUploading = false;
+        } else {
+            showStatusMessage("Please select a valid PDF file", "error");
+            resetUploadUI();
+            disableSubmitButton();
+        }
     } else {
-      showStatusMessage("Please select a valid PDF file", "error");
-      resetUploadUI();
-      disableSubmitButton();
+        resetUploadUI();
+        disableSubmitButton();
     }
-  } else {
-    resetUploadUI();
-    disableSubmitButton();
-  }
 });
 
 // Drag and drop functionality - Enhanced and robust
@@ -86,24 +86,26 @@ uploadArea.addEventListener("drop", function (e) {
   }
 });
 
+
+
 // Click to upload
 // Prevent double file-picker open when clicking the inner "Choose File" button
-const browseBtn = document.querySelector(".browse-btn");
+const browseBtn = document.querySelector('.browse-btn');
 if (browseBtn) {
-  browseBtn.addEventListener("click", function (e) {
-    e.stopPropagation();
-    if (!isUploading) {
-      pdfFile.click();
-    }
-  });
+    browseBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (!isUploading) {
+            pdfFile.click();
+        }
+    });
 }
 
-uploadArea.addEventListener("click", function (e) {
-  // If the click originated from the browse button, do nothing here
-  if (e.target.closest(".browse-btn")) return;
-  if (!isUploading) {
-    pdfFile.click();
-  }
+uploadArea.addEventListener('click', function(e) {
+    // If the click originated from the browse button, do nothing here
+    if (e.target.closest('.browse-btn')) return;
+    if (!isUploading) {
+        pdfFile.click();
+    }
 });
 
 // Form submission - Enhanced with better error handling
@@ -486,6 +488,14 @@ function setLoadingState(loading) {
 
 function showAnalysisSection() {
   analysisSection.classList.add("show");
+  
+  // Smooth scroll to analysis section after a short delay
+  setTimeout(() => {
+    analysisSection.scrollIntoView({ 
+      behavior: 'smooth',
+      block: 'start'
+    });
+  }, 300); // Wait for animation to start
 }
 
 function hideAnalysisSection() {
@@ -526,24 +536,24 @@ window.flipCardBack = flipCardBack;
 window.navigateToDashboard = navigateToDashboard;
 
 // Initialize app - Enhanced
-document.addEventListener("DOMContentLoaded", function () {
-  // Initial state
-  hideStatusMessage();
-  disableSubmitButton();
-
-  // Add smooth scrolling for better UX
-  document.documentElement.style.scrollBehavior = "smooth";
-
-  // Check if there are existing files on page load
-  if (pdfFile.files.length > 0) {
-    updateUploadUI(pdfFile.files[0]);
-    enableSubmitButton();
-  }
-
-  // Restore previous state if coming back from dashboard
-  restorePageState();
-
-  console.log("Transaction Tracker App initialized successfully!");
+document.addEventListener("DOMContentLoaded", function() {
+    // Initial state
+    hideStatusMessage();
+    disableSubmitButton();
+    
+    // Add smooth scrolling for better UX
+    document.documentElement.style.scrollBehavior = 'smooth';
+    
+    // Check if there are existing files on page load
+    if (pdfFile.files.length > 0) {
+        updateUploadUI(pdfFile.files[0]);
+        enableSubmitButton();
+    }
+    
+    // Restore previous state if coming back from dashboard
+    restorePageState();
+    
+    console.log("Transaction Tracker App initialized successfully!");
 });
 
 // Save page state before navigating away

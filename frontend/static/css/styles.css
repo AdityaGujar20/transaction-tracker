@@ -92,11 +92,13 @@ body {
     z-index: 1;
 }
 
-/* Header */
+/* Header - Compact for perfect viewport fit */
 .header {
-    padding: var(--spacing-md) 0;
+    padding: var(--spacing-sm) 0;
     border-bottom: 1px solid var(--border-color);
-    margin-bottom: var(--spacing-xl);
+    height: 80px;
+    display: flex;
+    align-items: center;
 }
 
 .logo {
@@ -119,21 +121,26 @@ body {
     color: var(--text-primary);
 }
 
-/* Hero Section */
+/* Hero Section - Fit perfectly in viewport */
 .hero-section {
-    padding: var(--spacing-xl) 0;
+    min-height: calc(100vh - 80px); /* Subtract header height */
+    display: flex;
+    align-items: center;
+    justify-content: center;
     text-align: center;
+    padding: var(--spacing-sm) 0;
 }
 
 .hero-content {
     max-width: 600px;
     margin: 0 auto;
+    width: 100%;
 }
 
 .hero-title {
-    font-size: 3rem;
+    font-size: 2.5rem;
     font-weight: var(--font-weight-bold);
-    margin-bottom: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
     background: linear-gradient(135deg, var(--primary-green), #ffffff);
     background-clip: text;
     -webkit-background-clip: text;
@@ -144,7 +151,7 @@ body {
 .hero-subtitle {
     font-size: 1.125rem;
     color: var(--text-secondary);
-    margin-bottom: var(--spacing-xl);
+    margin-bottom: var(--spacing-lg);
     font-weight: var(--font-weight-normal);
 }
 
@@ -311,12 +318,13 @@ body {
     to { transform: rotate(360deg); }
 }
 
-/* Analysis Section */
+/* Analysis Section - Appears below the fold */
 .analysis-section {
     display: none;
     padding: var(--spacing-xl) 0;
     border-top: 1px solid var(--border-color);
-    margin-top: var(--spacing-xl);
+    margin-top: var(--spacing-lg);
+    min-height: 100vh; /* Ensure it takes full viewport height */
 }
 
 .analysis-section.show {
@@ -363,7 +371,7 @@ body {
 }
 
 .refresh-btn:hover {
-    background: #d32f2f;
+    background: #c60505;
     transform: translateY(-1px);
 }
 
@@ -781,4 +789,49 @@ body {
     stroke: currentColor;
     fill: none;
     stroke-width: 2;
+}/
+* Responsive adjustments for perfect viewport fit */
+@media (max-height: 700px) {
+    .hero-section {
+        min-height: calc(100vh - 100px);
+    }
+    
+    .hero-title {
+        font-size: 2rem;
+        margin-bottom: var(--spacing-xs);
+    }
+    
+    .hero-subtitle {
+        font-size: 1rem;
+        margin-bottom: var(--spacing-md);
+    }
+    
+    .upload-card {
+        margin: var(--spacing-md) 0;
+    }
+}
+
+@media (max-height: 600px) {
+    .hero-section {
+        min-height: calc(100vh - 80px);
+        padding: var(--spacing-sm) 0;
+    }
+    
+    .header {
+        height: 60px;
+        padding: var(--spacing-xs) 0;
+    }
+    
+    .hero-title {
+        font-size: 1.75rem;
+    }
+    
+    .upload-card {
+        padding: var(--spacing-md);
+    }
+}
+
+/* Ensure smooth scrolling for the entire page */
+html {
+    scroll-behavior: smooth;
 }
