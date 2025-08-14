@@ -1,1 +1,8 @@
+# environment variables
 .env
+
+# cache folders and files
+__pycache__/
+
+# macOS system files
+.DS_Store
