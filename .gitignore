@@ -7,3 +7,6 @@ sample-test-output/
 # cache folders and files
 __pycache__/
 .vscode/
+
+# macOS system files
+.DS_Store
