@@ -1,125 +1,316 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Assistant - Transaction Tracker</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/css/styles.css?v={{ timestamp }}">
-    <link rel="stylesheet" href="/static/css/chatbot.css?v={{ timestamp }}">
-</head>
-<body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RAG Chatbot</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/css/styles.css?v={{ timestamp }}" />
+    <link rel="stylesheet" href="/static/css/chatbot.css?v={{ timestamp }}" />
+  </head>
+  <body>
     <!-- Video Background -->
     <div class="video-background">
-        <video autoplay muted loop>
-			<source src="/static/video/background.mp4" type="video/mp4">
-        </video>
-        <div class="video-overlay"></div>
+      <video autoplay muted loop>
+        <source src="/static/video/background.mp4" type="video/mp4" />
+      </video>
+      <div class="video-overlay"></div>
     </div>
 
     <!-- Main Container -->
     <div class="main-container">
-        <!-- Header -->
-        <header class="header">
-            <div class="logo">
-                <svg class="logo-icon" viewBox="0 0 24 24">
-                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+      <!-- Header -->
+      <header class="header">
+        <div class="logo">
+          <svg class="logo-icon" viewBox="0 0 24 24">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+          </svg>
+          <span class="logo-text">Smart Assistant</span>
+        </div>
+        <div class="header-actions"></div>
+          <button id="refreshDataBtn" class="refresh-btn" title="Refresh Data">
+            <svg viewBox="0 0 24 24">
+              <path d="M23 4v6h-6M1 20v-6h6m2-6a8 8 0 1 1-5.7 2.3" />
+            </svg>
+          </button>
+          <button id="clearChatBtn" class="clear-btn" title="Clear Chat">
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M3 6h18m-9 6v6m-4-6v6m8-6v6M5 6V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v2"
+              />
+            </svg>
+          </button>
+          <a href="/" class="back-btn">
+            <svg viewBox="0 0 24 24">
+              <path d="M19 12H5m7-7l-7 7 7 7" />
+            </svg>
+            Back to Upload
+          </a>
+        </div>
+      </header>
+
+      <!-- Quick Stats Sidebar -->
+      <div class="stats-sidebar" id="statsSidebar">
+        <div class="stats-header">
+          <h4>Quick Stats</h4>
+          <button class="toggle-stats-btn" id="toggleStatsBtn">
+            <svg viewBox="0 0 24 24">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div class="stats-content">
+          <div class="stat-item">
+            <div class="stat-value" id="totalSpent">₹0</div>
+            <div class="stat-label">Total Spent</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="totalReceived">₹0</div>
+            <div class="stat-label">Total Received</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="currentBalance">₹0</div>
+            <div class="stat-label">Current Balance</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="totalTransactions">0</div>
+            <div class="stat-label">Transactions</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat Container -->
+      <main class="chat-container">
+        <div class="chat-header">
+          <div class="ai-avatar">
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="3" />
+              <path
+                d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24"
+              />
+            </svg>
+          </div>
+          <div class="chat-info">
+            <h2>Expense Navigator RAG Chatbot</h2>
+            <p class="status" id="aiStatus">
+              Ready to analyze your transactions
+            </p>
+          </div>
+          <button class="stats-toggle-btn" id="showStatsBtn">
+            <svg viewBox="0 0 24 24">
+              <path d="M12 20V10M18 20V4M6 20v-6" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Welcome Message -->
+        <div class="welcome-section" id="welcomeSection">
+          <div class="welcome-card">
+            <h3>👋 Hello! I'm your Expense Navigator RAG Chatbot</h3>
+            <p>
+              I can help you understand your spending patterns and answer
+              questions about your transactions.
+            </p>
+
+            <div class="quick-questions">
+              <h4>Try asking me:</h4>
+              <div class="question-chips">
+                <button
+                  class="question-chip"
+                  data-question="What is my average food spending?"
+                >
+                  🍽️ Average food spending?
+                </button>
+                <button
+                  class="question-chip"
+                  data-question="Show me my top 5 expenses"
+                >
+                  📈 Top 5 expenses?
+                </button>
+                <button
+                  class="question-chip"
+                  data-question="How much did I spend on healthcare?"
+                >
+                  🏥 Healthcare spending?
+                </button>
+                <button
+                  class="question-chip"
+                  data-question="What's my monthly spending trend?"
+                >
+                  📊 Monthly trends?
+                </button>
+                <button
+                  class="question-chip"
+                  data-question="Show me category breakdown"
+                >
+                  📋 Category breakdown?
+                </button>
+                <button
+                  class="question-chip"
+                  data-question="What's my current balance?"
+                >
+                  💰 Current balance?
+                </button>
+              </div>
+            </div>
+
+            <!-- Health alert (shown when no data is available) -->
+            <div
+              id="healthAlert"
+              class="health-alert"
+              style="display: none; margin-top: 12px"
+            >
+              <p id="healthAlertText" style="margin-bottom: 8px">
+                Transaction data not found. Please upload and process your bank
+                statement first.
+              </p>
+              <a href="/" class="back-btn">
+                <svg viewBox="0 0 24 24">
+                  <path d="M19 12H5m7-7l-7 7 7 7" />
                 </svg>
-                <span class="logo-text">Smart Assistant</span>
+                Back
+              </a>
             </div>
-            <div class="header-actions">
-                <a href="/" class="back-btn">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M19 12H5m7-7l-7 7 7 7"/>
-                    </svg>
-                    Back to Upload
-                </a>
-            </div>
-        </header>
+          </div>
+        </div>
 
-        <!-- Chat Container -->
-        <main class="chat-container">
-            <div class="chat-header">
-                <div class="ai-avatar">
-                    <svg viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="3"/>
-                        <path d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24"/>
-                    </svg>
-                </div>
-                <div class="chat-info">
-                    <h2>Financial AI Assistant</h2>
-                    <p class="status" id="aiStatus">Ready to analyze your transactions</p>
-                </div>
-            </div>
+        <!-- Chat Messages -->
+        <div class="chat-messages" id="chatMessages">
+          <!-- Messages will be inserted here -->
+        </div>
 
-            <!-- Welcome Message -->
-            <div class="welcome-section" id="welcomeSection">
-                <div class="welcome-card">
-                    <h3>👋 Hello! I'm your Financial AI Assistant</h3>
-                    <p>I can help you understand your spending patterns and answer questions about your transactions.</p>
-                    
-                    <div class="quick-questions">
-                        <h4>Try asking me:</h4>
-                        <div class="question-chips">
-                            <button class="question-chip" data-question="What's my total spending?">
-                                💰 What's my total spending?
-                            </button>
-                            <button class="question-chip" data-question="Which category do I spend most on?">
-                                📊 Top spending category?
-                            </button>
-                            <button class="question-chip" data-question="What was my highest single expense?">
-                                📈 Highest single expense?
-                            </button>
-							<button class="question-chip" data-question="How much income did I receive this month?">
-                                ⚖️ Income vs expenses?
-                            </button>
-                        </div>
-                    </div>
+        <!-- Typing Indicator -->
+        <div
+          class="typing-indicator"
+          id="typingIndicator"
+          style="display: none"
+        >
+          <div class="ai-avatar">
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="3" />
+              <path
+                d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24"
+              />
+            </svg>
+          </div>
+          <div class="typing-dots">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </div>
 
-					<!-- Health alert (shown when no data is available) -->
-					<div id="healthAlert" class="health-alert" style="display:none; margin-top: 12px;">
-						<p id="healthAlertText" style="margin-bottom: 8px;">Transaction data not found. Please upload and process your bank statement first.</p>
-						<a href="/" class="back-btn">
-							<svg viewBox="0 0 24 24">
-								<path d="M19 12H5m7-7l-7 7 7 7"/>
-							</svg>
-							Go to Home
-						</a>
-					</div>
-                </div>
-            </div>
+        <!-- Chat Input -->
+        <div class="chat-input-container">
+          <div
+            class="input-suggestions"
+            id="inputSuggestions"
+            style="display: none"
+          >
+            <button
+              class="suggestion-btn"
+              data-suggestion="What's my total spending this month?"
+            >
+              Monthly Spending
+            </button>
+            <button
+              class="suggestion-btn"
+              data-suggestion="Show me transactions above ₹1000"
+            >
+              High Value Transactions
+            </button>
+            <button
+              class="suggestion-btn"
+              data-suggestion="What's my average transaction amount?"
+            >
+              Average Amount
+            </button>
+          </div>
+          <div class="chat-input-wrapper">
+            <input
+              type="text"
+              id="chatInput"
+              class="chat-input"
+              placeholder="Ask me anything about your finances..."
+              maxlength="500"
+              autocomplete="off"
+            />
+            <button id="sendBtn" class="send-btn" disabled>
+              <svg viewBox="0 0 24 24">
+                <path d="M2 21l21-9L2 3v7l15 2-15 2v7z" />
+              </svg>
+            </button>
+          </div>
+          <div class="input-footer">
+            <span class="char-count" id="charCount">0/500</span>
+            <span class="powered-by">Powered by Financial AI</span>
+          </div>
+        </div>
+      </main>
+    </div>
 
-            <!-- Chat Messages -->
-            <div class="chat-messages" id="chatMessages">
-                <!-- Messages will be inserted here -->
-            </div>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay" style="display: none">
+      <div class="loading-spinner">
+        <svg viewBox="0 0 24 24" class="loading-icon">
+          <circle
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            stroke-width="4"
+            fill="none"
+            stroke-dasharray="32"
+            stroke-dashoffset="32"
+          >
+            <animate
+              attributeName="stroke-dasharray"
+              dur="2s"
+              values="0 64;32 32;0 64"
+              repeatCount="indefinite"
+            />
+            <animate
+              attributeName="stroke-dashoffset"
+              dur="2s"
+              values="0;-32;-64"
+              repeatCount="indefinite"
+            />
+          </circle>
+        </svg>
+        <p>Loading your data...</p>
+      </div>
+    </div>
 
-            <!-- Chat Input -->
-            <div class="chat-input-container">
-                <div class="chat-input-wrapper">
-                    <input 
-                        type="text" 
-                        id="chatInput" 
-                        class="chat-input" 
-                        placeholder="Ask me anything about your finances..."
-                        maxlength="500"
-                    >
-                    <button id="sendBtn" class="send-btn" disabled>
-                        <svg viewBox="0 0 24 24">
-                            <path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/>
-                        </svg>
-                    </button>
-                </div>
-                <div class="input-footer">
-                    <span class="char-count" id="charCount">0/500</span>
-                    <span class="powered-by">Powered by Financial AI</span>
-                </div>
-            </div>
-        </main>
+    <!-- Error Modal -->
+    <div class="modal-overlay" id="errorModal" style="display: none">
+      <div class="modal">
+        <div class="modal-header">
+          <h4>Error</h4>
+          <button class="close-btn" id="closeErrorModal">
+            <svg viewBox="0 0 24 24">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p id="errorMessage">
+            An error occurred while processing your request.
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary" id="retryBtn">Retry</button>
+          <button class="btn btn-secondary" id="dismissErrorBtn">
+            Dismiss
+          </button>
+        </div>
+      </div>
     </div>
 
     <script src="/static/js/chatbot.js?v={{ timestamp }}"></script>
-</body>
+  </body>
 </html>

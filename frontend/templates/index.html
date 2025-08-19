@@ -1,171 +1,201 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Expense Navigator</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/css/styles.css?v={{ timestamp }}">
-</head>
-<body>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/css/styles.css?v={{ timestamp }}" />
+  </head>
+  <body>
     <!-- Video Background -->
     <div class="video-background">
-        <video autoplay muted loop>
-            <!-- <source src="https://assets.mixkit.co/videos/preview/mixkit-digital-rain-of-binary-code-1001-large.mp4" type="video/mp4"> -->
-            <source src="../static/video/cash.mp4" type="video/mp4">
-            <!-- Fallback gradient if video doesn't load -->
-        </video>
-        <div class="video-overlay"></div>
+      <video autoplay muted loop>
+        <!-- <source src="https://assets.mixkit.co/videos/preview/mixkit-digital-rain-of-binary-code-1001-large.mp4" type="video/mp4"> -->
+        <source src="../static/video/cash.mp4" type="video/mp4" />
+        <!-- Fallback gradient if video doesn't load -->
+      </video>
+      <div class="video-overlay"></div>
     </div>
 
     <!-- Main Container -->
     <div class="main-container">
-        <!-- Header -->
-        <header class="header">
-            <div class="logo">
-                <svg class="logo-icon" viewBox="0 0 24 24">
-                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-                </svg>
-                <span class="logo-text">Expense Navigator</span>
-            </div>
-        </header>
+      <!-- Header with Navigation -->
+      <header class="header">
+        <div class="logo">
+          <svg class="logo-icon" viewBox="0 0 24 24">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+          </svg>
+          <span class="logo-text">Expense Navigator</span>
+        </div>
+        <nav class="nav-menu">
+          <a href="/about" class="nav-link">About the Project</a>
+        </nav>
+      </header>
 
-        <!-- Hero Section -->
-        <main class="hero-section">
-            <div class="hero-content">
-                <h1 class="hero-title">Analyze Your Financial Data</h1>
-                <p class="hero-subtitle">Upload your bank statement and get instant insights into your spending patterns</p>
-                
-                <!-- Upload Card -->
-                <div class="upload-card">
-                    <form id="uploadForm" class="upload-form">
-                        <div class="upload-area" id="uploadArea">
-                            <input type="file" id="pdfFile" name="pdf" accept="application/pdf" hidden>
-                            
-                            <div class="upload-icon-wrapper">
-                                <svg class="upload-icon" viewBox="0 0 24 24">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-15"/>
-                                    <polyline points="7,10 12,15 17,10"/>
-                                    <line x1="12" y1="15" x2="12" y2="3"/>
-                                </svg>
-                            </div>
-                            
-                            <div class="upload-text">
-                                <h3 id="uploadTitle">Upload PDF Statement</h3>
-                                <p id="uploadSubtext">Drag and drop your file here or click to browse</p>
-                            </div>
-                            
-                            <button type="button" class="browse-btn" onclick="document.getElementById('pdfFile').click()">
-                                Choose File
-                            </button>
-                        </div>
-                        
-                        <button type="submit" class="submit-btn" id="submitBtn" disabled>
-                            <span>Analyze Now</span>
-                            <svg class="btn-arrow" viewBox="0 0 24 24">
-                                <line x1="5" y1="12" x2="19" y2="12"/>
-                                <polyline points="12,5 19,12 12,19"/>
-                            </svg>
-                        </button>
-                    </form>
+      <!-- Hero Section -->
+      <main class="hero-section">
+        <div class="hero-content">
+          <h1 class="hero-title">Analyze Your Financial Data</h1>
+          <p class="hero-subtitle">
+            Upload your bank statement and get instant insights into your
+            spending patterns
+          </p>
+
+          <!-- Upload Card -->
+          <div class="upload-card">
+            <form id="uploadForm" class="upload-form">
+              <div class="upload-area" id="uploadArea">
+                <input
+                  type="file"
+                  id="pdfFile"
+                  name="pdf"
+                  accept="application/pdf"
+                  hidden
+                />
+
+                <div class="upload-icon-wrapper">
+                  <svg class="upload-icon" viewBox="0 0 24 24">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-15" />
+                    <polyline points="7,10 12,15 17,10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
                 </div>
-                
-                <!-- Status Messages -->
-                <div id="statusMessage" class="status-message"></div>
-            </div>
-        </main>
 
-        <!-- Analysis Section -->
-        <section class="analysis-section" id="analysisSection">
-            <div class="analysis-header">
-                <h2>Your Financial Insights</h2>
-                <button id="refreshBtn" class="refresh-btn">
-                    <svg class="refresh-icon" viewBox="0 0 24 24">
-                        <polyline points="23 4 23 10 17 10"/>
-                        <polyline points="1 20 1 14 7 14"/>
-                        <path d="m3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-                    </svg>
-                    Refresh Data
+                <div class="upload-text">
+                  <h3 id="uploadTitle">Upload PDF Statement</h3>
+                  <p id="uploadSubtext">
+                    Drag and drop your file here or click to browse
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  class="browse-btn"
+                  onclick="document.getElementById('pdfFile').click()"
+                >
+                  Choose File
                 </button>
-            </div>
-            
-            <div class="analysis-grid">
-                <div class="analysis-card" data-endpoint="/faq/total-spending">
-                    <div class="card-icon">
-                        <svg viewBox="0 0 24 24">
-                            <line x1="12" y1="1" x2="12" y2="23"/>
-                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                        </svg>
-                    </div>
-                    <h3>Total Spending</h3>
-                    <p>Your complete expenditure</p>
-                </div>
-                
-                <div class="analysis-card" data-endpoint="/faq/total-income">
-                    <div class="card-icon">
-                        <svg viewBox="0 0 24 24">
-                            <line x1="12" y1="1" x2="12" y2="23"/>
-                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                        </svg>
-                    </div>
-                    <h3>Total Inflow</h3>
-                    <p>Your earnings breakdown</p>
-                </div>
-                
-                <div class="analysis-card" data-endpoint="/faq/highest-category">
-                    <div class="card-icon">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
-                        </svg>
-                    </div>
-                    <h3>Top Category</h3>
-                    <p>Where you spend most</p>
-                </div>
-            </div>
-            
-            <!-- Results Display -->
-            <div class="results-panel" id="resultsPanel">
-                <div class="results-header">
-                    <h3>Analysis Results</h3>
-                    <button class="close-results" onclick="closeResults()">
-                        <svg viewBox="0 0 24 24">
-                            <line x1="18" y1="6" x2="6" y2="18"/>
-                            <line x1="6" y1="6" x2="18" y2="18"/>
-                        </svg>
-                    </button>
-                </div>
-                <div class="results-content" id="resultsContent"></div>
-            </div>
-            
-<!-- Dashboard Link -->
-<div class="dashboard-section">
-    <div class="action-buttons">
-        <button type="button" class="dashboard-btn" onclick="navigateToDashboard()">
-            <svg viewBox="0 0 24 24">
-                <rect x="3" y="3" width="7" height="7"/>
-                <rect x="14" y="3" width="7" height="7"/>
-                <rect x="14" y="14" width="7" height="7"/>
-                <rect x="3" y="14" width="7" height="7"/>
+              </div>
+
+              <button type="submit" class="submit-btn" id="submitBtn" disabled>
+                <span>Analyze Now</span>
+                <svg class="btn-arrow" viewBox="0 0 24 24">
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                  <polyline points="12,5 19,12 12,19" />
+                </svg>
+              </button>
+            </form>
+          </div>
+
+          <!-- Status Messages -->
+          <div id="statusMessage" class="status-message"></div>
+        </div>
+      </main>
+
+      <!-- Analysis Section -->
+      <section class="analysis-section" id="analysisSection">
+        <div class="analysis-header">
+          <h2>Your Financial Insights</h2>
+          <button id="refreshBtn" class="refresh-btn">
+            <svg class="refresh-icon" viewBox="0 0 24 24">
+              <polyline points="23 4 23 10 17 10" />
+              <polyline points="1 20 1 14 7 14" />
+              <path
+                d="m3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"
+              />
             </svg>
-            View Dashboard
-        </button>
-        <a href="/chatbot" class="chatbot-btn">
-            <svg viewBox="0 0 24 24">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                <circle cx="9" cy="10" r="1"/>
-                <circle cx="15" cy="10" r="1"/>
-                <path d="M9 14s2 1 6 0"/>
-            </svg>
-            Talk to Smart System
-        </a>
-    </div>
-</div>
-            
-        </section>
+            Refresh Data
+          </button>
+        </div>
+
+        <div class="analysis-grid">
+          <div class="analysis-card" data-endpoint="/faq/total-spending">
+            <div class="card-icon">
+              <svg viewBox="0 0 24 24">
+                <line x1="12" y1="1" x2="12" y2="23" />
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+              </svg>
+            </div>
+            <h3>Total Spending</h3>
+            <p>Your complete expenditure</p>
+          </div>
+
+          <div class="analysis-card" data-endpoint="/faq/total-income">
+            <div class="card-icon">
+              <svg viewBox="0 0 24 24">
+                <line x1="12" y1="1" x2="12" y2="23" />
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+              </svg>
+            </div>
+            <h3>Total Inflow</h3>
+            <p>Your earnings breakdown</p>
+          </div>
+
+          <div class="analysis-card" data-endpoint="/faq/highest-category">
+            <div class="card-icon">
+              <svg viewBox="0 0 24 24">
+                <path
+                  d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"
+                />
+              </svg>
+            </div>
+            <h3>Top Category</h3>
+            <p>Where you spend most</p>
+          </div>
+        </div>
+
+        <!-- Results Display -->
+        <div class="results-panel" id="resultsPanel">
+          <div class="results-header">
+            <h3>Analysis Results</h3>
+            <button class="close-results" onclick="closeResults()">
+              <svg viewBox="0 0 24 24">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+          <div class="results-content" id="resultsContent"></div>
+        </div>
+
+        <!-- Dashboard Link -->
+        <div class="dashboard-section">
+          <div class="action-buttons">
+            <button
+              type="button"
+              class="dashboard-btn"
+              onclick="navigateToDashboard()"
+            >
+              <svg viewBox="0 0 24 24">
+                <rect x="3" y="3" width="7" height="7" />
+                <rect x="14" y="3" width="7" height="7" />
+                <rect x="14" y="14" width="7" height="7" />
+                <rect x="3" y="14" width="7" height="7" />
+              </svg>
+              View Dashboard
+            </button>
+            <a href="/chatbot" class="chatbot-btn">
+              <svg viewBox="0 0 24 24">
+                <path
+                  d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                />
+                <circle cx="9" cy="10" r="1" />
+                <circle cx="15" cy="10" r="1" />
+                <path d="M9 14s2 1 6 0" />
+              </svg>
+              Take to RAG Chatbot
+            </a>
+          </div>
+        </div>
+      </section>
     </div>
 
     <script src="/static/js/scripts.js?v={{ timestamp }}"></script>
-</body>
+  </body>
 </html>
