@@ -530,10 +530,30 @@ function navigateToDashboard() {
   window.location.href = "/dashboard";
 }
 
+// Scroll to upload section
+function scrollToUpload() {
+  const heroSection = document.querySelector('.hero-section');
+  if (heroSection) {
+    heroSection.scrollIntoView({ 
+      behavior: 'smooth',
+      block: 'start'
+    });
+    
+    // Focus on the upload area after scrolling
+    setTimeout(() => {
+      const uploadArea = document.getElementById('uploadArea');
+      if (uploadArea) {
+        uploadArea.focus();
+      }
+    }, 500);
+  }
+}
+
 // Global functions for HTML references
 window.closeResults = closeResults;
 window.flipCardBack = flipCardBack;
 window.navigateToDashboard = navigateToDashboard;
+window.scrollToUpload = scrollToUpload;
 
 // Initialize app - Enhanced
 document.addEventListener("DOMContentLoaded", function() {

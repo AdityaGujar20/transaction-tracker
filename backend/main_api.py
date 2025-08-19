@@ -1,21 +1,50 @@
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Request, Response, HTTPException
 from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi.middleware.cors import CORSMiddleware
 
 from pathlib import Path
 import shutil
 import os
 import time
+import logging
 from starlette.responses import Response as StarletteResponse
 
 from api import routes_pipeline, faq, chatbot_routes
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="Transaction Tracker APIs",
     description="Extracts, categorizes, and analyzes bank statements",
     version="1.0"
 )
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # In production, replace with specific origins
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Startup event
+@app.on_event("startup")
+async def startup_event():
+    logger.info("Transaction Tracker API starting up...")
+    # Ensure data directories exist
+    Path("data/processed").mkdir(parents=True, exist_ok=True)
+    Path("data/raw").mkdir(parents=True, exist_ok=True)
+    logger.info("Data directories initialized")
+
+# Shutdown event
+@app.on_event("shutdown")
+async def shutdown_event():
+    logger.info("Transaction Tracker API shutting down...")
 
 # Custom StaticFiles class with cache control
 class NoCacheStaticFiles(StaticFiles):
@@ -36,7 +65,7 @@ templates = Jinja2Templates(directory="../frontend/templates")
 # Register API routes
 app.include_router(routes_pipeline.router, prefix="/pipeline", tags=["Pipeline"])
 app.include_router(faq.router, prefix="/faq", tags=["Financial Analysis"])
-app.include_router(chatbot_routes.router, prefix="/chatbot", tags=["Chatbot"])
+app.include_router(chatbot_routes.router, prefix="/api", tags=["Chatbot"])
 
 # Home page (HTML)
 @app.get("/", response_class=HTMLResponse)
@@ -68,6 +97,21 @@ async def dashboard(request: Request):
     response.headers["Expires"] = "0"
     return response
 
+# About page (HTML)
+@app.get("/about", response_class=HTMLResponse)
+async def about_page(request: Request):
+    # Add timestamp for cache busting
+    timestamp = str(int(time.time()))
+    response = templates.TemplateResponse("about.html", {
+        "request": request, 
+        "timestamp": timestamp
+    })
+    # Add cache control headers for development
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
+
 # Chatbot page (HTML)
 @app.get("/chatbot", response_class=HTMLResponse)
 async def chatbot_page(request: Request):
@@ -86,23 +130,34 @@ async def chatbot_page(request: Request):
 # Serve the JSON data for dashboard
 @app.get("/data/processed/categorized_transactions.json")
 async def get_transaction_data():
-    # Use absolute path or relative to backend directory
-    json_file_path = Path("data/processed/categorized_transactions.json")
-    
-    # If not found, try relative to backend directory
-    if not json_file_path.exists():
-        json_file_path = Path("backend/data/processed/categorized_transactions.json")
-    
-    if not json_file_path.exists():
-        from fastapi import HTTPException
-        raise HTTPException(status_code=404, detail="Transaction data not found. Please upload and process your bank statement first.")
-    
-    # Add cache control headers to prevent caching
-    response = FileResponse(json_file_path, media_type="application/json")
-    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-    response.headers["Pragma"] = "no-cache"
-    response.headers["Expires"] = "0"
-    return response
+    try:
+        # Use absolute path or relative to backend directory
+        json_file_path = Path("data/processed/categorized_transactions.json")
+        
+        # If not found, try relative to backend directory
+        if not json_file_path.exists():
+            json_file_path = Path("backend/data/processed/categorized_transactions.json")
+        
+        if not json_file_path.exists():
+            logger.warning(f"Transaction data not found at {json_file_path}")
+            raise HTTPException(status_code=404, detail="Transaction data not found. Please upload and process your bank statement first.")
+        
+        logger.info(f"Serving transaction data from {json_file_path}")
+        
+        # Add cache control headers to prevent caching
+        response = FileResponse(json_file_path, media_type="application/json")
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        return response
+    except Exception as e:
+        logger.error(f"Error serving transaction data: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error while retrieving transaction data")
+
+# Health check endpoint
+@app.get("/health")
+def health_check():
+    return {"status": "healthy", "timestamp": time.time()}
 
 # API root JSON
 @app.get("/api-info")
@@ -113,6 +168,7 @@ def api_info():
         "available_endpoints": {
             "pages": {
                 "home": "/",
+                "about": "/about",
                 "dashboard": "/dashboard",
                 "chatbot": "/chatbot"
             },
@@ -129,24 +185,35 @@ def api_info():
                 "financial_summary": "/faq/summary"
             },
             "chatbot": {
-                "chat": "/chatbot/chat",
-                "stats": "/chatbot/stats",
-                "health": "/chatbot/health"
+                "chat": "/api/chatbot/chat",
+                "analytics": "/api/chatbot/analytics",
+                "status": "/api/chatbot/status",
+                "reload_data": "/api/chatbot/reload-data"
             },
             "data": {
                 "transaction_data": "/data/processed/categorized_transactions.json"
             },
-            "documentation": "/docs"
+            "documentation": "/docs",
+            "health": "/health"
         }
     }
 
 # Deletes the files inside data/processed
 @app.delete("/refresh-data")
 def refresh_data():
-    processed_dir = Path("data/processed")
+    try:
+        processed_dir = Path("data/processed")
 
-    if processed_dir.exists() and processed_dir.is_dir():
-        shutil.rmtree(processed_dir)  # delete folder
-        processed_dir.mkdir(parents=True, exist_ok=True)  # recreate empty folder
-    
-    return {"message": "Processed data cleared successfully"}
+        if processed_dir.exists() and processed_dir.is_dir():
+            logger.info(f"Clearing processed data directory: {processed_dir}")
+            shutil.rmtree(processed_dir)  # delete folder
+            processed_dir.mkdir(parents=True, exist_ok=True)  # recreate empty folder
+            logger.info("Processed data cleared successfully")
+        else:
+            logger.info("Processed data directory does not exist, creating it")
+            processed_dir.mkdir(parents=True, exist_ok=True)
+        
+        return {"message": "Processed data cleared successfully", "success": True}
+    except Exception as e:
+        logger.error(f"Error clearing processed data: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error clearing processed data: {str(e)}")

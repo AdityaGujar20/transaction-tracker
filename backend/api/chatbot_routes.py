@@ -1,100 +1,163 @@
+# backend/api/chatbot_routes.py
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from pathlib import Path
+from typing import Dict, Any
+import logging
+from core.rag_chatbot import get_chatbot
 
-from datetime import datetime
-import sys
-import os
+router = APIRouter(prefix="/chatbot", tags=["chatbot"])
 
-# Add the parent directory to sys.path to import the chatbot module
-current_dir = os.path.dirname(os.path.abspath(__file__))
-parent_dir = os.path.dirname(current_dir)
-sys.path.append(parent_dir)
-
-# Import chatbot functions (using simple version for now)
-try:
-    from core.chatbot import get_chatbot_response, get_chatbot_stats
-except ImportError:
-    # Fallback to simple version if OpenAI has issues
-    from core.chatbot_simple import get_chatbot_response, get_chatbot_stats
-
-router = APIRouter()
-
+# Pydantic models for request/response
 class ChatMessage(BaseModel):
     message: str
 
 class ChatResponse(BaseModel):
     response: str
-    timestamp: str
+    intent: Dict[str, Any]
+    success: bool
 
 @router.post("/chat", response_model=ChatResponse)
-async def chat_endpoint(chat_message: ChatMessage):
+async def chat_with_bot(chat_message: ChatMessage):
     """
-    Process a chat message and return chatbot response
-    """
-    try:
-        if not chat_message.message or not chat_message.message.strip():
-            raise HTTPException(status_code=400, detail="Message cannot be empty")
-        
-        # Get response from chatbot
-        response = get_chatbot_response(chat_message.message.strip())
-        
-        return ChatResponse(
-            response=response,
-            timestamp=datetime.now().isoformat()
-        )
-    
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error processing chat message: {str(e)}")
-
-@router.get("/stats")
-async def get_chatbot_statistics():
-    """
-    Get basic statistics about the transaction data
+    Chat with the RAG-based transaction bot
     """
     try:
-        stats = get_chatbot_stats()
-        return JSONResponse(content=stats)
-    
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error getting chatbot stats: {str(e)}")
-
-@router.get("/health")
-async def chatbot_health():
-    """
-    Check if chatbot service is healthy and data is available
-    """
-    try:
-        json_path = Path("data/processed/categorized_transactions.json")
+        # Get chatbot instance
+        chatbot = get_chatbot()
         
-        if not json_path.exists():
-            return JSONResponse(
-                content={
-                    "status": "unhealthy",
-                    "message": "Transaction data not found. Please upload and process your bank statement first.",
-                    "data_available": False
-                },
-                status_code=200
+        if not chatbot.df.empty:
+            # Understand the question
+            intent = chatbot.understand_question(chat_message.message)
+            
+            # Generate response
+            response = chatbot.generate_response(chat_message.message)
+            
+            return ChatResponse(
+                response=response,
+                intent=intent,
+                success=True
             )
-        
-        stats = get_chatbot_stats()
-        
-        return JSONResponse(
-            content={
-                "status": "healthy",
-                "message": "Chatbot is ready to answer your questions",
-                "data_available": True,
-                "transactions_loaded": stats["total_transactions"]
-            }
-        )
-    
+        else:
+            return ChatResponse(
+                response="Sorry, I don't have any transaction data to analyze. Please upload your transaction data first.",
+                intent={"type": "error", "is_relevant": False},
+                success=False
+            )
+            
     except Exception as e:
-        return JSONResponse(
-            content={
-                "status": "error",
-                "message": f"Error checking chatbot health: {str(e)}",
-                "data_available": False
-            },
-            status_code=500
+        logging.error(f"Chatbot error: {str(e)}")
+        return ChatResponse(
+            response="I'm sorry, I encountered an error while processing your request. Please try again.",
+            intent={"type": "error", "is_relevant": False},
+            success=False
         )
+
+@router.get("/analytics")
+async def get_analytics():
+    """
+    Get precomputed analytics for the chatbot
+    """
+    try:
+        chatbot = get_chatbot()
+        
+        if not chatbot.df.empty:
+            logging.info(f"Analytics retrieved successfully with {len(chatbot.df)} transactions")
+            return {
+                "analytics": chatbot.analytics,
+                "success": True
+            }
+        else:
+            logging.warning("No transaction data available for analytics")
+            return {
+                "analytics": {
+                    "summary": {
+                        "total_transactions": 0,
+                        "total_debits": 0,
+                        "total_credits": 0,
+                        "current_balance": 0
+                    }
+                },
+                "success": False,
+                "message": "No transaction data available"
+            }
+            
+    except Exception as e:
+        logging.error(f"Analytics error: {str(e)}")
+        return {
+            "analytics": {
+                "summary": {
+                    "total_transactions": 0,
+                    "total_debits": 0,
+                    "total_credits": 0,
+                    "current_balance": 0
+                }
+            },
+            "success": False,
+            "error": str(e)
+        }
+
+@router.get("/status")
+async def get_chatbot_status():
+    """
+    Get chatbot status and data availability
+    """
+    try:
+        chatbot = get_chatbot()
+        
+        return {
+            "status": "active",
+            "data_available": not chatbot.df.empty,
+            "total_transactions": len(chatbot.df) if not chatbot.df.empty else 0,
+            "date_range": chatbot.analytics.get('date_range', {}) if not chatbot.df.empty else {},
+            "categories": list(chatbot.analytics.get('categories', {}).keys()) if not chatbot.df.empty else []
+        }
+        
+    except Exception as e:
+        logging.error(f"Status error: {str(e)}")
+        return {
+            "status": "error",
+            "data_available": False,
+            "error": str(e)
+        }
+
+@router.post("/reload-data")
+async def reload_chatbot_data():
+    """
+    Reload transaction data for the chatbot
+    """
+    try:
+        import os
+        
+        # Check if data file exists
+        data_path = os.path.join(os.getcwd(), 'data', 'processed', 'categorized_transactions.json')
+        logging.info(f"Checking for data file at: {data_path}")
+        
+        if not os.path.exists(data_path):
+            logging.error(f"Data file not found at {data_path}")
+            raise HTTPException(status_code=404, detail=f"Data file not found at {data_path}")
+        
+        # Reset the global instance to force reload
+        from core.rag_chatbot import get_chatbot
+        import core.rag_chatbot as chatbot_module
+        chatbot_module._chatbot_instance = None
+        logging.info("Global chatbot instance reset")
+        
+        # Get new instance
+        chatbot = get_chatbot()
+        logging.info(f"New chatbot instance created with {len(chatbot.df)} transactions")
+        
+        return {
+            "success": True,
+            "message": "Data reloaded successfully",
+            "total_transactions": len(chatbot.df) if not chatbot.df.empty else 0,
+            "data_path": data_path,
+            "analytics_available": bool(chatbot.analytics)
+        }
+        
+    except Exception as e:
+        logging.error(f"Reload data error: {str(e)}")
+        return {
+            "success": False,
+            "error": str(e),
+            "message": f"Error reloading data: {str(e)}"
+        }
